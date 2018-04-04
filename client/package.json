@@ -7,8 +7,20 @@
     "test": "jest"
   },
   "dependencies": {
+    "apollo-cache-redux": "^0.1.0",
+    "apollo-client": "^2.2.8",
+    "apollo-link": "^1.2.1",
+    "apollo-link-error": "^1.0.7",
+    "apollo-link-http": "^1.5.3",
+    "apollo-link-redux": "^0.2.1",
+    "graphql": "^0.13.2",
+    "graphql-tag": "^2.8.0",
     "react": "16.3.0-alpha.0",
-    "react-native": "0.55.0"
+    "react-apollo": "^2.1.2",
+    "react-native": "0.55.0",
+    "react-redux": "^5.0.7",
+    "redux": "^3.7.2",
+    "redux-devtools-extension": "^2.13.2"
   },
   "devDependencies": {
     "babel-jest": "22.4.3",
