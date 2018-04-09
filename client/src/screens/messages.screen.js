@@ -3,8 +3,11 @@ import {
   Platform,
   ActivityIndicator,
   FlatList,
+  Image,
   KeyboardAvoidingView,
   StyleSheet,
+  Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import PropTypes from 'prop-types';
@@ -30,30 +33,65 @@ const styles = StyleSheet.create({
   loading: {
     justifyContent: 'center',
   },
+  titleWrapper: {
+    alignItems: 'flex-start',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+  },
+  title: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  titleImage: {
+    marginRight: 6,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
 });
 
-const fakeData = () => _.times(100, i => ({
-  // every message will have a different color
-  color: randomColor(),
+// const fakeData = () => _.times(100, i => ({
+//   // every message will have a different color
+//   color: randomColor(),
 
-  // every 5th message will look like it's from the current user
-  isCurrentUser: i % 5 === 0,
-  message: {
-    id: i,
-    createdAt: new Date().toISOString(),
-    from: {
-      username: `Username ${i}`,
-    },
-    text: `Message ${i}`,
-  },
-}));
+//   // every 5th message will look like it's from the current user
+//   isCurrentUser: i % 5 === 0,
+//   message: {
+//     id: i,
+//     createdAt: new Date().toISOString(),
+//     from: {
+//       username: `Username ${i}`,
+//     },
+//     text: `Message ${i}`,
+//   },
+// }));
 
 class Messages extends Component {
 
   static navigationOptions = ({ navigation }) => {
-    const { state } = navigation;
-    return {
+    const { state, navigate } = navigation;
+    
+    const goToGroupDetails = navigate.bind(this, 'GroupDetails', {
+      id: state.params.groupId,
       title: state.params.title,
+    });
+
+    return {
+      headerTitle: (
+        <TouchableOpacity
+          style={styles.titleWrapper}
+          onPress={goToGroupDetails}
+        >
+          <View style={styles.title}>
+            <Image
+              style={styles.titleImage}
+              source={{ uri: 'https://reactjs.org/logo-og.png' }}
+            />
+            <Text>{state.params.title}</Text>
+          </View>
+        </TouchableOpacity>
+      ),
     };
   };
 
@@ -98,9 +136,9 @@ class Messages extends Component {
       groupId: this.props.navigation.state.params.groupId,
       userId: 1, // faking the user for now
       text,
-    }).then( () => {
+    }).then(() => {
       this.flatList.scrollToEnd({ animated : true });
-      console.log(`sending message: ${text}`);
+      // console.log(`sending message: ${text}`);
     });
   }
 
@@ -150,6 +188,7 @@ class Messages extends Component {
 Messages.propTypes = {
   createMessage: PropTypes.func,
   navigation: PropTypes.shape({
+    navigate: PropTypes.func,
     state: PropTypes.shape({
       params: PropTypes.shape({
         groupId: PropTypes.number,

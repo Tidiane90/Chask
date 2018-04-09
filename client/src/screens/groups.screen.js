@@ -4,6 +4,7 @@ import React, { Component } from 'react';
 import {
   FlatList,
   ActivityIndicator,
+  Button,
   StyleSheet,
   Text,
   TouchableHighlight,
@@ -37,13 +38,34 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flex: 0.7,
   },
+  header: {
+    alignItems: 'flex-end',
+    padding: 6,
+    borderColor: '#eee',
+    borderBottomWidth: 1,
+  },
+  warning: {
+    textAlign: 'center',
+    padding: 12,
+  },
 });
 
 // create fake data to populate our ListView
-const fakeData = () => _.times(100, i => ({
-  id: i,
-  name: `Group ${i}`,
-}));
+// const fakeData = () => _.times(100, i => ({
+//   id: i,
+//   name: `Group ${i}`,
+// }));
+
+const Header = ({ onPress }) => (
+  <View style={styles.header}>
+    <Button title={'New Group'} onPress={onPress} />
+  </View>
+);
+
+Header.propTypes = {
+  onPress: PropTypes.func.isRequired,
+};
+
 class Group extends Component {
     
     constructor(props) {
@@ -83,6 +105,7 @@ class Groups extends Component {
   constructor(props) {
     super(props);
     this.goToMessages = this.goToMessages.bind(this);
+    this.goToNewGroup = this.goToNewGroup.bind(this);
   }
 
   keyExtractor = item => item.id.toString();
@@ -90,6 +113,11 @@ class Groups extends Component {
   goToMessages(group) {
     const { navigate } = this.props.navigation;
     navigate('Messages', { groupId: group.id, title: group.name });
+  }
+
+  goToNewGroup() {
+    const { navigate } = this.props.navigation;
+    navigate('NewGroup');
   }
 
   renderItem = ({ item }) => <Group group={item} goToMessages={this.goToMessages} />;
@@ -105,6 +133,15 @@ class Groups extends Component {
         </View>
       );
     }
+
+    if (user && !user.groups.length) {
+      return (
+        <View style={styles.container}>
+          <Header onPress={this.goToNewGroup} />
+          <Text style={styles.warning}>{'You do not have any groups.'}</Text>
+        </View>
+      );
+    }
     
     // render list of groups for user
     return (
@@ -113,6 +150,7 @@ class Groups extends Component {
           data={user.groups}
           keyExtractor={this.keyExtractor}
           renderItem={this.renderItem}
+          ListHeaderComponent={() => <Header onPress={this.goToNewGroup} />}
         />
       </View>
     );
@@ -140,7 +178,7 @@ const userQuery = graphql(USER_QUERY, {
     options: () => ({ variables: { id: 1 } }),      // fake the user for now
     props: ({ data: { loading, user, error } }) => {
         if(error) {
-            console.log("GQL Err => :", error);
+            console.log("GQL Err groups.screen => :", error);
         }
       return {loading, user};
     },
