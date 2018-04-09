@@ -17,15 +17,15 @@ import { ApolloLink } from 'apollo-link';
 import { ApolloProvider } from 'react-apollo';
 import { composeWithDevTools } from 'redux-devtools-extension';
 import { createHttpLink } from 'apollo-link-http';
+// import { HttpLink } from 'apollo-link-http'
+import { onError } from 'apollo-link-error';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
 import { ReduxCache, apolloReducer } from 'apollo-cache-redux';
 import ReduxLink from 'apollo-link-redux';
-import { onError } from 'apollo-link-error';
+
 
 import AppWithNavigationState, { navigationReducer, navigationMiddleware } from './navigation';
-
-const URL = 'localhost:8080'; // set your comp's url here
 
 const store = createStore(
   combineReducers({
@@ -38,30 +38,52 @@ const store = createStore(
   ),
 );
 
+const URL = 'http://10.0.2.2:8080'; // set your comp's url here
+
 const cache = new ReduxCache({ store });
+
 const reduxLink = new ReduxLink(store);
+
 const errorLink = onError((errors) => {
   console.log(errors);
 });
 
-const httpLink = createHttpLink({ uri: `http://${URL}/graphql` });
+const httpLink = createHttpLink({ uri: `${URL}/graphql` });
 const link = ApolloLink.from([
   reduxLink,
   errorLink,
   httpLink,
 ]);
 
+// const link = new ApolloLink.from([
+//   onError(({ graphQLErrors, networkError, operation, response }) => {
+//     // if (graphQLErrors) {
+// 		// 	// graphQLErrors.map(({ message, locations, path }) =>
+// 		// 	//   console.log(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`)
+// 		// 	// )
+// 		// }
+// 		// if (networkError) {
+// 		//   console.log(`[Network error]: ${networkError}`)
+// 		// }
+//     return response;
+//   }),
+//   new HttpLink({
+//     // credentials: 'same-origin', // Send the cookie along with every request
+//     uri: `http://${URL}/graphql`
+//   })
+// ])
+
 export const client = new ApolloClient({
   link,
-  cache,
+  cache
 });
 
-const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' +
-    'Cmd+D or shake for dev menu',
-  android: 'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
-});
+// const instructions = Platform.select({
+//   ios: 'Press Cmd+R to reload,\n' +
+//     'Cmd+D or shake for dev menu',
+//   android: 'Double tap R on your keyboard to reload,\n' +
+//     'Shake or press menu button for dev menu',
+// });
 
 type Props = {};
 

@@ -38,8 +38,8 @@ const TestScreen = title => () => (
 
 // tabs in main screen
 const MainScreenNavigator = TabNavigator({
-  Chats: { screen: Groups },
-  Settings: { screen: TestScreen('Settings') },
+  Chats: { screen: Groups, navigationOptions :  { title: "Chats"} },
+  Settings: { screen: TestScreen('Settings'), navigationOptions :  { title: "Settings"} },
 }, {
   initialRouteName: 'Chats',
 });

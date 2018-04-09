@@ -13,7 +13,7 @@ import { Resolvers } from './data/resolvers';
 import { Schema } from './data/schema';
 import { Mocks } from './data/mocks';
 
-const GRAPHQL_PORT = 3000;
+const GRAPHQL_PORT = 8080;
 const app = express();
 
 const executableSchema = makeExecutableSchema({

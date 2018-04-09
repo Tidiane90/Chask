@@ -3,15 +3,24 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import {
   FlatList,
+  ActivityIndicator,
   StyleSheet,
   Text,
   TouchableHighlight,
   View,
 } from 'react-native';
 
+import { graphql, compose } from 'react-apollo';
+import { connect } from 'react-redux';
+import { USER_QUERY } from '../graphql/user.query';
+
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',
+    flex: 1,
+  },
+  loading: {
+    justifyContent: 'center',
     flex: 1,
   },
   groupContainer: {
@@ -50,7 +59,7 @@ class Group extends Component {
             onPress={this.goToMessages}
         >
             <View style={styles.groupContainer}>
-            <Text style={styles.groupName}>{`${name}`}</Text>
+                <Text style={styles.groupName}>{`${name}`}</Text>
             </View>
         </TouchableHighlight>
         );
@@ -67,9 +76,9 @@ Group.propTypes = {
 
 class Groups extends Component {
 
-  static navigationOptions = {
-    title: 'Chats',
-  };
+//   static navigationOptions = {
+//     title: 'Chats',
+//   };
 
   constructor(props) {
     super(props);
@@ -86,11 +95,22 @@ class Groups extends Component {
   renderItem = ({ item }) => <Group group={item} goToMessages={this.goToMessages} />;
 
   render() {
+    const { loading, user } = this.props;
+
+    // render loading placeholder while we fetch messages
+    if (loading) {
+      return (
+        <View style={[styles.loading, styles.container]}>
+          <ActivityIndicator />
+        </View>
+      );
+    }
+    
     // render list of groups for user
     return (
       <View style={styles.container}>
         <FlatList
-          data={fakeData()}
+          data={user.groups}
           keyExtractor={this.keyExtractor}
           renderItem={this.renderItem}
         />
@@ -103,6 +123,31 @@ Groups.propTypes = {
     navigation: PropTypes.shape({
       navigate: PropTypes.func,
     }),
+    loading: PropTypes.bool,
+    user: PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        email: PropTypes.string.isRequired,
+        groups: PropTypes.arrayOf(
+            PropTypes.shape({
+                id: PropTypes.number.isRequired,
+                name: PropTypes.string.isRequired,
+            }),
+        ),
+    }),
 };
 
-export default Groups;
+const userQuery = graphql(USER_QUERY, {
+    options: () => ({ variables: { id: 1 } }),      // fake the user for now
+    props: ({ data: { loading, user, error } }) => {
+        if(error) {
+            console.log("000000000");
+            console.log("GQL Err => :", error);
+            console.log("111111111");
+        }
+      return {loading, user};
+    },
+  })(Groups)
+
+export default userQuery;
+
+// export default Groups;
