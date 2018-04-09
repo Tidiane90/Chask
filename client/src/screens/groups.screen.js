@@ -140,9 +140,7 @@ const userQuery = graphql(USER_QUERY, {
     options: () => ({ variables: { id: 1 } }),      // fake the user for now
     props: ({ data: { loading, user, error } }) => {
         if(error) {
-            console.log("000000000");
             console.log("GQL Err => :", error);
-            console.log("111111111");
         }
       return {loading, user};
     },
