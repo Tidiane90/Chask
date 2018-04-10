@@ -12,12 +12,30 @@ export const Schema = [`
   # declare custom scalars
   scalar Date
 
+  # the wrapper type that will hold the edges and pageInfo fields
+  type MessageConnection {
+    edges: [MessageEdge]
+    pageInfo: PageInfo!
+  }
+
+  # the type used for edges and will hold the node and cursor fields
+  type MessageEdge {
+    cursor: String!
+    node: Message!
+  }
+
+  # the type used for pageInfo and hold the hasPreviousPage and hasNextPage fields
+  type PageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+  }
+
   # a group chat entity
   type Group {
     id: Int! # unique id for the group
     name: String # name of the group
     users: [User]! # users in the group
-    messages: [Message] # messages sent to the group
+    messages(first: Int, after: String, last: Int, before: String): MessageConnection # messages sent to the group
   }
 
   # a user -- keep type really simple for now

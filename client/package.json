@@ -13,6 +13,7 @@
     "apollo-link-error": "^1.0.7",
     "apollo-link-http": "^1.5.3",
     "apollo-link-redux": "^0.2.1",
+    "buffer": "^5.1.0",
     "graphql": "^0.13.2",
     "graphql-tag": "^2.8.0",
     "immutability-helper": "^2.6.6",

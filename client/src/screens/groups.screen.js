@@ -5,14 +5,16 @@ import {
   FlatList,
   ActivityIndicator,
   Button,
+  Image,
   StyleSheet,
   Text,
   TouchableHighlight,
   View,
 } from 'react-native';
-
 import { graphql, compose } from 'react-apollo';
-import { connect } from 'react-redux';
+import moment from 'moment';
+import Icon from 'react-native-vector-icons/FontAwesome';
+
 import { USER_QUERY } from '../graphql/user.query';
 
 const styles = StyleSheet.create({
@@ -38,6 +40,32 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flex: 0.7,
   },
+  groupTextContainer: {
+    flex: 1,
+    flexDirection: 'column',
+    paddingLeft: 6,
+  },
+  groupText: {
+    // color: '#8c8c8c',
+    color: 'red'
+  },
+  groupImage: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+  },
+  groupTitleContainer: {
+    flexDirection: 'row',
+  },
+  groupLastUpdated: {
+    flex: 0.3,
+    color: '#8c8c8c',
+    fontSize: 11,
+    textAlign: 'right',
+  },
+  groupUsername: {
+    paddingVertical: 4,
+  },
   header: {
     alignItems: 'flex-end',
     padding: 6,
@@ -55,6 +83,16 @@ const styles = StyleSheet.create({
 //   id: i,
 //   name: `Group ${i}`,
 // }));
+
+// format createdAt with moment
+const formatCreatedAt = createdAt => moment(createdAt).calendar(null, {
+  sameDay: '[Today]',
+  nextDay: '[Tomorrow]',
+  nextWeek: 'dddd',
+  lastDay: '[Yesterday]',
+  lastWeek: 'dddd',
+  sameElse: 'DD/MM/YYYY',
+});
 
 const Header = ({ onPress }) => (
   <View style={styles.header}>
@@ -74,17 +112,43 @@ class Group extends Component {
     }
 
     render() {
-        const { id, name } = this.props.group;
-        return (
-        <TouchableHighlight
-            key={id}
-            onPress={this.goToMessages}
-        >
-            <View style={styles.groupContainer}>
+      const { id, name, messages } = this.props.group;
+      return (
+      <TouchableHighlight
+        key={id}
+        onPress={this.goToMessages}
+      >
+          <View style={styles.groupContainer}>
+            <Image
+              style={styles.groupImage}
+              source={{
+                uri: 'https://reactjs.org/logo-og.png',
+              }}
+            />
+            <View style={styles.groupTextContainer}>
+              <View style={styles.groupTitleContainer}>
                 <Text style={styles.groupName}>{`${name}`}</Text>
+                <Text style={styles.groupLastUpdated}>
+                  {messages.edges.length ?
+                    formatCreatedAt(messages.edges[0].node.createdAt) : ''}
+                </Text>
+              </View>
+              <Text style={styles.groupUsername}>
+                {messages.edges.length ?
+                  `${messages.edges[0].node.from.username}:` : ''}
+              </Text>
+              <Text style={styles.groupText} numberOfLines={1}>
+                {messages.edges.length ? messages.edges[0].node.text : ''}
+              </Text>
             </View>
-        </TouchableHighlight>
-        );
+            <Icon
+              name="angle-right"
+              size={24}
+              color={'#8c8c8c'}
+            />
+          </View>
+      </TouchableHighlight>
+      );
     }
 }
 
@@ -93,6 +157,12 @@ Group.propTypes = {
   group: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
+    messages: PropTypes.shape({
+      edges: PropTypes.arrayOf(PropTypes.shape({
+        cursor: PropTypes.string,
+        node: PropTypes.object,
+      })),
+    }),
   }),
 };
 
@@ -106,6 +176,12 @@ class Groups extends Component {
     super(props);
     this.goToMessages = this.goToMessages.bind(this);
     this.goToNewGroup = this.goToNewGroup.bind(this);
+    this.onRefresh = this.onRefresh.bind(this);
+  }
+
+  onRefresh() {
+    this.props.refetch();
+    console.log("manual refeshing")
   }
 
   keyExtractor = item => item.id.toString();
@@ -123,7 +199,7 @@ class Groups extends Component {
   renderItem = ({ item }) => <Group group={item} goToMessages={this.goToMessages} />;
 
   render() {
-    const { loading, user } = this.props;
+    const { loading, user, networkStatus  } = this.props;
 
     // render loading placeholder while we fetch messages
     if (loading) {
@@ -151,6 +227,8 @@ class Groups extends Component {
           keyExtractor={this.keyExtractor}
           renderItem={this.renderItem}
           ListHeaderComponent={() => <Header onPress={this.goToNewGroup} />}
+          onRefresh={this.onRefresh}
+          refreshing={networkStatus === 4}
         />
       </View>
     );
@@ -162,6 +240,8 @@ Groups.propTypes = {
       navigate: PropTypes.func,
     }),
     loading: PropTypes.bool,
+    networkStatus: PropTypes.number,
+    refetch: PropTypes.func,
     user: PropTypes.shape({
         id: PropTypes.number.isRequired,
         email: PropTypes.string.isRequired,
@@ -176,11 +256,13 @@ Groups.propTypes = {
 
 const userQuery = graphql(USER_QUERY, {
     options: () => ({ variables: { id: 1 } }),      // fake the user for now
-    props: ({ data: { loading, user, error } }) => {
+    props: ({ data: { loading, user, networkStatus, refetch, error } }) => {
         if(error) {
             console.log("GQL Err groups.screen => :", error);
         }
-      return {loading, user};
+        console.log("network status => ", networkStatus)
+        console.log("refetch => ", refetch)
+      return {networkStatus, refetch, loading, user};
     },
   })(Groups)
 
