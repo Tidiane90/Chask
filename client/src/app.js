@@ -23,6 +23,9 @@ import { createStore, combineReducers, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
 import { ReduxCache, apolloReducer } from 'apollo-cache-redux';
 import ReduxLink from 'apollo-link-redux';
+import { WebSocketLink } from 'apollo-link-ws';
+import { getMainDefinition } from 'apollo-utilities';
+import { SubscriptionClient } from 'subscriptions-transport-ws';
 
 
 import AppWithNavigationState, { navigationReducer, navigationMiddleware } from './navigation';
@@ -38,7 +41,7 @@ const store = createStore(
   ),
 );
 
-const URL = 'http://10.0.2.2:8080'; // set your comp's url here
+const URL = '10.0.2.2:8080'; // set your comp's url here
 
 const cache = new ReduxCache({ store });
 
@@ -48,11 +51,35 @@ const errorLink = onError((errors) => {
   console.log(errors);
 });
 
-const httpLink = createHttpLink({ uri: `${URL}/graphql` });
+const httpLink = createHttpLink({ uri: `http://${URL}/graphql` });
+
+// Create WebSocket client
+export const wsClient = new SubscriptionClient(`ws://${URL}/subscriptions`, {
+  reconnect: true,
+  connectionParams: {
+    // Pass any arguments you want for initialization
+  },
+});
+
+const webSocketLink = new WebSocketLink(wsClient);
+
+const requestLink = ({ queryOrMutationLink, subscriptionLink }) =>
+  ApolloLink.split(
+    ({ query }) => {
+      const { kind, operation } = getMainDefinition(query);
+      return kind === 'OperationDefinition' && operation === 'subscription';
+    },
+    subscriptionLink,
+    queryOrMutationLink,
+  );
+
 const link = ApolloLink.from([
   reduxLink,
   errorLink,
-  httpLink,
+  requestLink({
+    queryOrMutationLink: httpLink,
+    subscriptionLink: webSocketLink,
+  }),
 ]);
 
 // const link = new ApolloLink.from([

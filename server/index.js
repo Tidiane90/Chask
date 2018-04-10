@@ -8,26 +8,16 @@ import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
 import { makeExecutableSchema, addMockFunctionsToSchema } from 'graphql-tools';
 import bodyParser from 'body-parser';
 import { createServer } from 'http';
+import { SubscriptionServer } from 'subscriptions-transport-ws';
+import { execute, subscribe } from 'graphql';
 
-import { Resolvers } from './data/resolvers';
-import { Schema } from './data/schema';
-import { Mocks } from './data/mocks';
+import { executableSchema } from './data/schema';
 
 const GRAPHQL_PORT = 8080;
+const GRAPHQL_PATH = '/graphql';
+const SUBSCRIPTIONS_PATH = '/subscriptions';
+
 const app = express();
-
-const executableSchema = makeExecutableSchema({
-  typeDefs: Schema,
-  resolvers: Resolvers,
-});
-
-// we can comment out this code for mocking data
-// we're using REAL DATA now!
-// addMockFunctionsToSchema({
-//   schema: executableSchema,
-//   mocks: Mocks,
-//   preserveResolvers: true,
-// });
 
 // `context` must be an object and can't be undefined when using connectors
 app.use('/graphql', bodyParser.json(), graphqlExpress({
@@ -36,9 +26,23 @@ app.use('/graphql', bodyParser.json(), graphqlExpress({
 }));
 
 app.use('/graphiql', graphiqlExpress({
-  endpointURL: '/graphql',
+  endpointURL: GRAPHQL_PATH,
+  subscriptionsEndpoint: `ws://localhost:${GRAPHQL_PORT}${SUBSCRIPTIONS_PATH}`,
 }));
 
 const graphQLServer = createServer(app);
 
-graphQLServer.listen(GRAPHQL_PORT, () => console.log(`GraphQL Server is now running on http://localhost:${GRAPHQL_PORT}/graphql`));
+// graphQLServer.listen(GRAPHQL_PORT, () => console.log(`GraphQL Server is now running on http://localhost:${GRAPHQL_PORT}/graphql`));
+graphQLServer.listen(GRAPHQL_PORT, () => {
+  console.log(`GraphQL Server is now running on http://localhost:${GRAPHQL_PORT}${GRAPHQL_PATH}`);
+  console.log(`GraphQL Subscriptions are now running on ws://localhost:${GRAPHQL_PORT}${SUBSCRIPTIONS_PATH}`);
+});
+// eslint-disable-next-line no-unused-vars
+const subscriptionServer = SubscriptionServer.create({
+  schema: executableSchema,
+  execute,
+  subscribe,
+}, {
+  server: graphQLServer,
+  path: SUBSCRIPTIONS_PATH,
+});

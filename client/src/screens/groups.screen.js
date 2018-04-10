@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   },
   groupText: {
     // color: '#8c8c8c',
-    color: 'red'
+    color: 'brown',
   },
   groupImage: {
     width: 54,
@@ -65,6 +65,7 @@ const styles = StyleSheet.create({
   },
   groupUsername: {
     paddingVertical: 4,
+    color: 'green',
   },
   header: {
     alignItems: 'flex-end',
@@ -256,16 +257,17 @@ Groups.propTypes = {
 
 const userQuery = graphql(USER_QUERY, {
     options: () => ({ variables: { id: 1 } }),      // fake the user for now
-    props: ({ data: { loading, user, networkStatus, refetch, error } }) => {
-        if(error) {
-            console.log("GQL Err groups.screen => :", error);
-        }
-        console.log("network status => ", networkStatus)
-        console.log("refetch => ", refetch)
-      return {networkStatus, refetch, loading, user};
-    },
-  })(Groups)
+    props: ({ data: { loading, user, networkStatus, refetch, error } }) => ({
+      networkStatus, refetch, loading, user,
+      //   if(error) {
+      //       console.log("GQL Err groups.screen => :", error);
+      //   }
+      //   console.log("network status => ", networkStatus)
+      //   console.log("refetch => ", refetch)
+      // return {networkStatus, refetch, loading, user};
+    }),
+  })
 
-export default userQuery;
+export default userQuery(Groups);
 
 // export default Groups;

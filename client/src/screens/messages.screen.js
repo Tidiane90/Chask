@@ -16,14 +16,15 @@ import randomColor from 'randomcolor';
 import { graphql, compose } from 'react-apollo';
 import update from 'immutability-helper';
 import { Buffer } from 'buffer';
-import _ from 'lodash';
 import moment from 'moment';
 
+import { wsClient } from '../app';
 import Message from '../components/message.component';
 import MessageInput from '../components/message-input.component';
 import GROUP_QUERY from '../graphql/group.query';
 import CREATE_MESSAGE_MUTATION from '../graphql/create-message.mutation';
 import USER_QUERY from '../graphql/user.query';
+import MESSAGE_ADDED_SUBSCRIPTION from '../graphql/message-added.subscription';
 
 // For KeyboardAvoidingView bug on Android
 const offset = (Platform.OS === 'android') ? -200 : 0;
@@ -132,6 +133,34 @@ class Messages extends Component {
         });
       }
 
+      // we don't resubscribe on changed props because it never happens in our app
+      if (!this.subscription) {
+        this.subscription = nextProps.subscribeToMore({
+          document: MESSAGE_ADDED_SUBSCRIPTION,
+          variables: {
+            userId: 1, // fake the user for now
+            groupIds: [nextProps.navigation.state.params.groupId],
+          },
+          updateQuery: (previousResult, { subscriptionData }) => {
+            const newMessage = subscriptionData.data.messageAdded;
+
+            return update(previousResult, {
+              group: {
+                messages: {
+                  edges: {
+                    $unshift: [{
+                      __typename: 'MessageEdge',
+                      node: newMessage,
+                      cursor: Buffer.from(newMessage.id.toString()).toString('base64'),
+                    }],
+                  },
+                },
+              },
+            });
+          },
+        });
+      }
+      
       this.setState({
         usernameColors,
       });
@@ -139,7 +168,6 @@ class Messages extends Component {
   }
 
   onEndReached() {
-    console.log('doing: onEndReached');
     if (!this.state.loadingMoreEntries && this.props.group.messages.pageInfo.hasNextPage) {
       this.setState({
         loadingMoreEntries: true,
@@ -238,6 +266,7 @@ Messages.propTypes = {
   }),
   loading: PropTypes.bool,
   loadMoreEntries: PropTypes.func,
+  subscribeToMore: PropTypes.func,
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -249,9 +278,10 @@ const groupQuery = graphql(GROUP_QUERY, {
       first: ITEMS_PER_PAGE,
     },
   }),
-  props: ({ data: { fetchMore, loading, group } }) => ({
+  props: ({ data: { fetchMore, loading, group, subscribeToMore  } }) => ({
     loading,
     group,
+    subscribeToMore,
     loadMoreEntries() {
       return fetchMore({
         // query: ... (you can specify a different query.
@@ -346,7 +376,7 @@ const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
               node: createMessage,
               cursor: Buffer.from(createMessage.id.toString()).toString('base64'),
             };
-            
+
             // Write our data back to the cache.
             store.writeQuery({
               query: USER_QUERY,
