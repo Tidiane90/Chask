@@ -50,12 +50,21 @@ const MESSAGES_PER_USER = 5;
 faker.seed(123); // get consistent data every time we reload app
 
 const mySalt = 10;
+let first = true;
 
 // fakes a bunch of groups, users, and messages
 db.sync({ force: true }).then(() => _.times(GROUPS, () => GroupModel.create({
   name: faker.lorem.words(3),
 }).then(group => _.times(USERS_PER_GROUP, () => {
-  const password = faker.internet.password();
+  let password
+  if(first) {
+    password = "abc"
+    first = false
+  }
+  else {
+    password = faker.internet.password();
+  }
+  // const password = faker.internet.password();
   return bcrypt.hash(password, mySalt).then(hash => group.createUser({
     email: faker.internet.email(),
     username: faker.internet.userName(),

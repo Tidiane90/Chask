@@ -14,6 +14,7 @@ import {
 import { graphql, compose } from 'react-apollo';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { connect } from 'react-redux';
 
 import { USER_QUERY } from '../graphql/user.query';
 
@@ -105,8 +106,10 @@ Header.propTypes = {
   onPress: PropTypes.func.isRequired,
 };
 
+// we'll fake signin for now
+// let IS_SIGNED_IN = false;
+
 class Group extends Component {
-    
     constructor(props) {
         super(props);
         this.goToMessages = this.props.goToMessages.bind(this, this.props.group);
@@ -169,9 +172,9 @@ Group.propTypes = {
 
 class Groups extends Component {
 
-//   static navigationOptions = {
-//     title: 'Chats',
-//   };
+  static navigationOptions = {
+    title: 'Chats',
+  };
 
   constructor(props) {
     super(props);
@@ -180,9 +183,19 @@ class Groups extends Component {
     this.onRefresh = this.onRefresh.bind(this);
   }
 
+  // componentDidMount() {
+  //   if (!IS_SIGNED_IN) {
+  //     IS_SIGNED_IN = true;
+
+  //     const { navigate } = this.props.navigation;
+
+  //     navigate('Signin');
+  //   }
+  // }
+
   onRefresh() {
     this.props.refetch();
-    console.log("manual refeshing")
+    // faking unauthorized status
   }
 
   keyExtractor = item => item.id.toString();
@@ -256,18 +269,28 @@ Groups.propTypes = {
 };
 
 const userQuery = graphql(USER_QUERY, {
-    options: () => ({ variables: { id: 1 } }),      // fake the user for now
-    props: ({ data: { loading, user, networkStatus, refetch, error } }) => ({
-      networkStatus, refetch, loading, user,
-      //   if(error) {
-      //       console.log("GQL Err groups.screen => :", error);
-      //   }
-      //   console.log("network status => ", networkStatus)
-      //   console.log("refetch => ", refetch)
-      // return {networkStatus, refetch, loading, user};
-    }),
-  })
+  skip: ownProps => !ownProps.auth || !ownProps.auth.jwt,
+  options: ownProps => ({ variables: { id: ownProps.auth.id } }),
+  props: ({ data: { loading, user, networkStatus, refetch, error } }) => ({
+    networkStatus, refetch, loading, user,
+    //   if(error) {
+    //       console.log("GQL Err groups.screen => :", error);
+    //   }
+    //   console.log("network status => ", networkStatus)
+    //   console.log("refetch => ", refetch)
+    // return {networkStatus, refetch, loading, user};
+  }),
+})
 
-export default userQuery(Groups);
+const mapStateToProps = ({ auth }) => ({
+  auth,
+});
+
+export default compose(
+  connect(mapStateToProps),
+  userQuery,
+)(Groups);
+
+// export default userQuery(Groups);
 
 // export default Groups;

@@ -13,18 +13,12 @@ import {
 } from 'react-native';
 import { graphql, compose } from 'react-apollo';
 import { NavigationActions } from 'react-navigation';
+import { connect } from 'react-redux';
 
 import GROUP_QUERY from '../graphql/group.query';
 import USER_QUERY from '../graphql/user.query';
 import DELETE_GROUP_MUTATION from '../graphql/delete-group.mutation';
 import LEAVE_GROUP_MUTATION from '../graphql/leave-group.mutation';
-
-const resetAction = NavigationActions.reset({
-  index: 0,
-  actions: [
-    NavigationActions.navigate({ routeName: 'Main' }),
-  ],
-});
 
 const styles = StyleSheet.create({
   container: {
@@ -84,6 +78,14 @@ const styles = StyleSheet.create({
   },
 });
 
+const resetAction = NavigationActions.reset({
+  index: 0,
+  actions: [
+    NavigationActions.navigate({ routeName: 'Main' }),
+  ],
+});
+
+
 class GroupDetails extends Component {
   static navigationOptions = ({ navigation }) => ({
     title: `${navigation.state.params.title}`,
@@ -110,7 +112,6 @@ class GroupDetails extends Component {
   leaveGroup() {
     this.props.leaveGroup({
       id: this.props.navigation.state.params.id,
-      userId: 1,    // fake user for now
     })
       .then(() => {
         this.props.navigation.dispatch(resetAction);
@@ -213,13 +214,13 @@ const groupQuery = graphql(GROUP_QUERY, {
 });
 
 const deleteGroupMutation = graphql(DELETE_GROUP_MUTATION, {
-  props: ({ mutate }) => ({
+  props: ({ ownProps, mutate }) => ({
     deleteGroup: id =>
       mutate({
         variables: { id },
         update: (store, { data: { deleteGroup } }) => {
           // Read the data from our cache for this query.
-          const data = store.readQuery({ query: USER_QUERY, variables: { id: 1 } }); // fake for now
+          const data = store.readQuery({ query: USER_QUERY, variables: { id: ownProps.auth.id } }); 
 
           // Add our message from the mutation to the end.
           data.user.groups = data.user.groups.filter(g => deleteGroup.id !== g.id);
@@ -227,7 +228,7 @@ const deleteGroupMutation = graphql(DELETE_GROUP_MUTATION, {
           // Write our data back to the cache.
           store.writeQuery({
             query: USER_QUERY,
-            variables: { id: 1 }, // fake for now
+            variables: { id: ownProps.auth.id }, 
             data,
           });
         },
@@ -236,13 +237,13 @@ const deleteGroupMutation = graphql(DELETE_GROUP_MUTATION, {
 });
 
 const leaveGroupMutation = graphql(LEAVE_GROUP_MUTATION, {
-  props: ({ mutate }) => ({
-    leaveGroup: ({ id, userId }) =>
+  props: ({ ownProps, mutate }) => ({
+    leaveGroup: ({ id }) =>
       mutate({
-        variables: { id, userId },
+        variables: { id },
         update: (store, { data: { leaveGroup } }) => {
           // Read the data from our cache for this query.
-          const data = store.readQuery({ query: USER_QUERY, variables: { id: 1 } }); // fake for now
+          const data = store.readQuery({ query: USER_QUERY, variables: { id: ownProps.auth.id } }); 
 
           // Add our message from the mutation to the end.
           data.user.groups = data.user.groups.filter(g => leaveGroup.id !== g.id);
@@ -250,7 +251,7 @@ const leaveGroupMutation = graphql(LEAVE_GROUP_MUTATION, {
           // Write our data back to the cache.
           store.writeQuery({
             query: USER_QUERY,
-            variables: { id: 1 }, // fake for now
+            variables: { id: ownProps.auth.id }, 
             data,
           });
         },
@@ -258,7 +259,12 @@ const leaveGroupMutation = graphql(LEAVE_GROUP_MUTATION, {
   }),
 });
 
+const mapStateToProps = ({ auth }) => ({
+  auth,
+});
+
 export default compose(
+  connect(mapStateToProps),
   groupQuery,
   deleteGroupMutation,
   leaveGroupMutation,

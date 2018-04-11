@@ -1,4 +1,3 @@
-import { _ } from 'lodash';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -11,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { _ } from 'lodash';
 import { graphql, compose } from 'react-apollo';
 import { NavigationActions } from 'react-navigation';
 import update from 'immutability-helper';
@@ -19,14 +19,6 @@ import { connect } from 'react-redux';
 import { USER_QUERY } from '../graphql/user.query';
 import CREATE_GROUP_MUTATION from '../graphql/create-group.mutation';
 import SelectedUserList from '../components/selected-user-list.component';
-
-const goToNewGroup = group => NavigationActions.reset({
-  index: 1,
-  actions: [
-    NavigationActions.navigate({ routeName: 'Main' }),
-    NavigationActions.navigate({ routeName: 'Messages', params: { groupId: group.id, title: group.name } }),
-  ],
-});
 
 const styles = StyleSheet.create({
   container: {
@@ -83,6 +75,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#dbdbdb',
     color: '#777',
   },
+});
+
+const goToNewGroup = group => NavigationActions.reset({
+  index: 1,
+  actions: [
+    NavigationActions.navigate({ routeName: 'Main' }),
+    NavigationActions.navigate({ routeName: 'Messages', params: { groupId: group.id, title: group.name } }),
+  ],
 });
 
 class FinalizeGroup extends Component {
@@ -145,7 +145,6 @@ class FinalizeGroup extends Component {
 
     createGroup({
       name: this.state.name,
-      userId: 1, // fake user for now
       userIds: _.map(this.state.selected, 'id'),
     }).then((res) => {
       this.props.navigation.dispatch(goToNewGroup(res.data.createGroup));
@@ -224,13 +223,13 @@ FinalizeGroup.propTypes = {
 };
 
 const createGroupMutation = graphql(CREATE_GROUP_MUTATION, {
-  props: ({ mutate }) => ({
-    createGroup: ({ name, userIds, userId }) =>
+  props: ({ ownProps, mutate }) => ({
+    createGroup: ({ name, userIds }) =>
       mutate({
-        variables: { name, userIds, userId },
+        variables: { name, userIds },
         update: (store, { data: { createGroup } }) => {
           // Read the data from our cache for this query.
-          const data = store.readQuery({ query: USER_QUERY, variables: { id: userId  } });
+          const data = store.readQuery({ query: USER_QUERY, variables: { id: ownProps.auth.id } });
 
           // Add our message from the mutation to the end.
           data.user.groups.push(createGroup);
@@ -238,7 +237,7 @@ const createGroupMutation = graphql(CREATE_GROUP_MUTATION, {
           // Write our data back to the cache.
           store.writeQuery({
             query: USER_QUERY,
-            variables: { id: userId  },
+            variables: { id: ownProps.auth.id },
             data,
           });
         },
@@ -257,7 +256,12 @@ const userQuery = graphql(USER_QUERY, {
   }),
 });
 
+const mapStateToProps = ({ auth }) => ({
+  auth,
+});
+
 export default compose(
+  connect(mapStateToProps),
   userQuery,
   createGroupMutation,
 )(FinalizeGroup);

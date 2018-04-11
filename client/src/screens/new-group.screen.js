@@ -1,4 +1,3 @@
-import { _ } from 'lodash';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -10,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { graphql, compose } from 'react-apollo';
+import { _ } from 'lodash';
 import AlphabetListView from 'react-native-alpha-listview';
 import update from 'immutability-helper';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -313,12 +313,17 @@ NewGroup.propTypes = {
 };
 
 const userQuery = graphql(USER_QUERY, {
-  options: () => ({ variables: { id: 1 } }), // fake for now
-  props: ({ data: { loading, user, error } }) => ({
+  options: ownProps => ({ variables: { id: ownProps.auth.id } }),
+  props: ({ data: { loading, user } }) => ({
     loading, user,
   }),
 });
 
+const mapStateToProps = ({ auth }) => ({
+  auth,
+});
+
 export default compose(
+  connect(mapStateToProps),
   userQuery,
 )(NewGroup);
