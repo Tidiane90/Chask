@@ -1,6 +1,7 @@
 import { _ } from 'lodash';
 import faker from 'faker';
 import Sequelize from 'sequelize';
+import bcrypt from 'bcryptjs';
 
 // initialize our database
 const db = new Sequelize('chask', null, null, {
@@ -24,6 +25,7 @@ const UserModel = db.define('user', {
   email: { type: Sequelize.STRING },
   username: { type: Sequelize.STRING },
   password: { type: Sequelize.STRING },
+  version: { type: Sequelize.INTEGER }, // version the password
 });
 
 // users belong to multiple groups
@@ -47,16 +49,18 @@ const USERS_PER_GROUP = 5;
 const MESSAGES_PER_USER = 5;
 faker.seed(123); // get consistent data every time we reload app
 
-// you don't need to stare at this code too hard
-// just trust that it fakes a bunch of groups, users, and messages
+const mySalt = 10;
+
+// fakes a bunch of groups, users, and messages
 db.sync({ force: true }).then(() => _.times(GROUPS, () => GroupModel.create({
   name: faker.lorem.words(3),
 }).then(group => _.times(USERS_PER_GROUP, () => {
   const password = faker.internet.password();
-  return group.createUser({
+  return bcrypt.hash(password, mySalt).then(hash => group.createUser({
     email: faker.internet.email(),
     username: faker.internet.userName(),
-    password,
+    password: hash,
+    version: 1,
   }).then((user) => {
     console.log(
       '{email, username, password}',
@@ -68,7 +72,7 @@ db.sync({ force: true }).then(() => _.times(GROUPS, () => GroupModel.create({
       text: faker.lorem.sentences(3),
     }));
     return user;
-  });
+  }));
 })).then((userPromises) => {
   // make users friends with all users in the group
   Promise.all(userPromises).then((users) => {

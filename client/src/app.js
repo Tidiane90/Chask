@@ -112,7 +112,7 @@ export const client = new ApolloClient({
 //     'Shake or press menu button for dev menu',
 // });
 
-type Props = {};
+// type Props = {};
 
 export default class App extends Component {
   render() {
