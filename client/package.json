@@ -26,7 +26,7 @@
     "randomcolor": "^0.5.3",
     "react": "16.3.0-alpha.0",
     "react-apollo": "^2.1.2",
-    "react-native": "0.55.0",
+    "react-native": "0.54.2",
     "react-native-alpha-listview": "^0.2.1",
     "react-native-vector-icons": "^4.6.0",
     "react-navigation": "^1.5.10",
