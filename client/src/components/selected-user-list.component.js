@@ -59,13 +59,17 @@ export class SelectedUserListItem extends Component {
         style={styles.itemContainer}
       >
         <View>
-          <Image
+          {/* <Image
             style={styles.itemImage}
             source={{ uri: 'https://reactjs.org/logo-og.png' }}
+          /> */}
+          <Icon
+            name="address-card"
+            size={50}
           />
           <TouchableOpacity onPress={this.remove} style={styles.itemIcon}>
             <Icon
-              color="white"
+              color="red"
               name="times"
               size={12}
             />

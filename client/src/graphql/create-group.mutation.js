@@ -7,6 +7,7 @@ const CREATE_GROUP_MUTATION = gql`
     createGroup(name: $name, userIds: $userIds) {
       id
       name
+      ownerId
       users {
         id
       }

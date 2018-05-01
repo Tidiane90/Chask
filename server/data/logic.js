@@ -105,6 +105,7 @@ export const groupLogic = {
         .then((friends) => {  // eslint-disable-line arrow-body-style
           return Group.create({
             name,
+            ownerId: user.id,
           }).then((group) => {  // eslint-disable-line arrow-body-style
             return group.addUsers([user, ...friends]).then(() => {
               group.users = [user, ...friends];

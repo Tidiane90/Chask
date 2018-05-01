@@ -7,6 +7,7 @@ const GROUP_ADDED_SUBSCRIPTION = gql`
     groupAdded(userId: $userId){
       id
       name
+      ownerId
       messages(first: 1) {
         edges {
           cursor

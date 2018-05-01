@@ -13,6 +13,7 @@ const db = new Sequelize('chask', null, null, {
 // define groups
 const GroupModel = db.define('group', {
   name: { type: Sequelize.STRING },
+  ownerId: { type: Sequelize.INTEGER },
 });
 
 // define messages
@@ -51,19 +52,31 @@ faker.seed(123); // get consistent data every time we reload app
 
 const mySalt = 10;
 let first = true;
+// let count = 0;
+let ownerCount = 2;
+
+db.sync({ force: true }).then( () => UserModel.create({
+  email: "ChaskChatbot@gmail.com",
+  username: "Chask.ChatBot",
+  password: "chatbot",
+  version: 1,
+}).then((userBot) => {
+  console.log("--------------- chat bot ---------------")
+  console.log(
+    '{email, username, password, id}',
+    `{${userBot.email}, ${userBot.username}, ${userBot.password}, ${userBot.id}}`
+  );
+  console.log("--------------- chat bot ---------------")
+  return userBot;
+}));
 
 // fakes a bunch of groups, users, and messages
 db.sync({ force: true }).then(() => _.times(GROUPS, () => GroupModel.create({
   name: faker.lorem.words(3),
+  ownerId: ownerCount++
 }).then(group => _.times(USERS_PER_GROUP, () => {
-  let password
-  if(first) {
-    password = "abc"
-    first = false
-  }
-  else {
-    password = faker.internet.password();
-  }
+
+  const password = faker.lorem.words(1);
   // const password = faker.internet.password();
   return bcrypt.hash(password, mySalt).then(hash => group.createUser({
     email: faker.internet.email(),
@@ -72,17 +85,36 @@ db.sync({ force: true }).then(() => _.times(GROUPS, () => GroupModel.create({
     version: 1,
   }).then((user) => {
     console.log(
-      '{email, username, password}',
-      `{${user.email}, ${user.username}, ${password}}`
+      '{email, username, password, id}',
+      `{${user.email}, ${user.username}, ${password}, ${user.id}}`
     );
     _.times(MESSAGES_PER_USER, () => MessageModel.create({
       userId: user.id,
       groupId: group.id,
       text: faker.lorem.sentences(3),
     }));
+
+    // if(count > GROUPS) {
+    //   count = 0;
+    //   first = true;
+    // }    
+    // if(first) {
+    //   group.ownerId = user.id;
+    //   first = false;
+    // }
+    // count = count+ 1;
+
+    
+    
+    console.log(
+      '{groupId, groupName, owner}',
+      `{${group.id}, ${group.name}, ${group.ownerId}}`
+    );
+
     return user;
   }));
 })).then((userPromises) => {
+  
   // make users friends with all users in the group
   Promise.all(userPromises).then((users) => {
     _.each(users, (current, i) => {

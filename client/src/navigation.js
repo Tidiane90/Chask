@@ -30,7 +30,7 @@ import { LOGOUT } from './constants/constants';
 
 // tabs in main screen
 const MainScreenNavigator = TabNavigator({
-  Chats: { screen: Groups /*navigationOptions :  { title: "Chats"}*/ },
+  Chats: { screen: Groups },
   Settings: { screen: Settings },
 }, {
   initialRouteName: 'Chats',
@@ -63,7 +63,7 @@ export const navigationReducer = (state = initialState, action) => {
   switch (action.type) {
     case REHYDRATE:
       // convert persisted data to Immutable and confirm rehydration
-      if (!action.payload.auth || !action.payload.auth.jwt) {
+      if (!action.payload /*|| !action.payload.auth || !action.payload.auth.jwt*/) {
         const { routes, index } = state;
         if (routes[index].routeName !== 'Signin') {
           nextState = AppNavigator.router.getStateForAction(
@@ -72,6 +72,8 @@ export const navigationReducer = (state = initialState, action) => {
           );
         }
       }
+      console.log("-----------------------------")
+      console.log("action.payload => ", action.payload)
       break;
     case LOGOUT:
       const { routes, index } = state;
@@ -83,6 +85,11 @@ export const navigationReducer = (state = initialState, action) => {
       }
       break;
     default:
+      console.log("2")
+      console.log("action => ", action)
+      console.log("state => ", state)
+      console.log("action.payload => ", action.payload)
+      // console.log("action.payload => ", action.payload.auth)
       nextState = AppNavigator.router.getStateForAction(action, state);
       break;
   }

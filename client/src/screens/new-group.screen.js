@@ -126,9 +126,14 @@ class Cell extends Component {
   render() {
     return (
       <View style={styles.cellContainer}>
-        <Image
+        {/* <Image
           style={styles.cellImage}
           source={{ uri: 'https://reactjs.org/logo-og.png' }}
+        /> */}
+        <Icon
+          name="address-card"
+          size={30}
+          // color={'#8c8c8c'}
         />
         <Text style={styles.cellLabel}>{this.props.item.username}</Text>
         <View style={styles.checkButtonContainer}>

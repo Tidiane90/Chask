@@ -161,6 +161,7 @@ Group.propTypes = {
   group: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
+    ownerId: PropTypes.bool,
     messages: PropTypes.shape({
       edges: PropTypes.arrayOf(PropTypes.shape({
         cursor: PropTypes.string,

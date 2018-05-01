@@ -7,6 +7,7 @@ const GROUP_QUERY = gql`
     group(id: $groupId) {
       id
       name
+      ownerId
       users {
         id
         username

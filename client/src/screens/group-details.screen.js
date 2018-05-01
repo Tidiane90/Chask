@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import {
   ActivityIndicator,
   Button,
+  Alert,
   Image,
   FlatList,
   StyleSheet,
@@ -14,6 +15,7 @@ import {
 import { graphql, compose } from 'react-apollo';
 import { NavigationActions } from 'react-navigation';
 import { connect } from 'react-redux';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 import GROUP_QUERY from '../graphql/group.query';
 import USER_QUERY from '../graphql/user.query';
@@ -100,34 +102,57 @@ class GroupDetails extends Component {
   }
 
   deleteGroup() {
-    this.props.deleteGroup(this.props.navigation.state.params.id)
-      .then(() => {
-        this.props.navigation.dispatch(resetAction);
-      })
-      .catch((e) => {
-        console.log(e); // eslint-disable-line no-console
-      });
+    Alert.alert(
+      `Delete Group confirmation Screen:`,
+      "Are you sure you want to delete this group?",
+      [
+        { text: 'Yes', onPress: () => 
+          this.props.deleteGroup(this.props.navigation.state.params.id)
+          .then(() => {
+            this.props.navigation.dispatch(resetAction);
+          })
+          .catch((e) => {
+            console.log(e); // eslint-disable-line no-console
+          })
+        }, // eslint-disable-line no-console
+        { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' }, // eslint-disable-line no-console
+      ],
+    );
+    
   }
 
   leaveGroup() {
-    this.props.leaveGroup({
-      id: this.props.navigation.state.params.id,
-    })
-      .then(() => {
-        this.props.navigation.dispatch(resetAction);
-      })
-      .catch((e) => {
-        console.log(e); // eslint-disable-line no-console
-      });
+    Alert.alert(
+      `Leave Group confirmation Screen:`,
+      "Are you sure you want to leave this group?",
+      [
+        { text: 'Yes', onPress: () => 
+          this.props.leaveGroup({
+            id: this.props.navigation.state.params.id,
+          })
+            .then(() => {
+              this.props.navigation.dispatch(resetAction);
+            })
+            .catch((e) => {
+              console.log(e); // eslint-disable-line no-console
+            })
+        }, // eslint-disable-line no-console
+        { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' }, // eslint-disable-line no-console
+      ],
+    );
   }
 
   keyExtractor = item => item.id.toString();
 
   renderItem = ({ item: user }) => (
     <View style={styles.user}>
-      <Image
+      {/* <Image
         style={styles.avatar}
         source={{ uri: 'https://reactjs.org/logo-og.png' }}
+      /> */}
+      <Icon
+        name="address-card"
+        size={50}
       />
       <Text style={styles.username}>{user.username}</Text>
     </View>
@@ -172,8 +197,14 @@ class GroupDetails extends Component {
           )}
           ListFooterComponent={() => (
             <View>
-              <Button title="Leave Group" onPress={this.leaveGroup} />
-              <Button title="Delete Group" onPress={this.deleteGroup} />
+              { console.log("group => ", group) }
+              { console.log("auth id qsqsdqdqed=> ", this.props.auth.id) }
+              {   
+                group.ownerId == this.props.auth.id ? 
+                <Button title="Delete Group" onPress={this.deleteGroup} />
+              :
+                <Button title="Leave Group" onPress={this.leaveGroup} />
+               }
             </View>
           )}
         />
@@ -187,6 +218,7 @@ GroupDetails.propTypes = {
   group: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
+    ownerId: PropTypes.number,
     users: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number,
       username: PropTypes.string,
@@ -259,9 +291,11 @@ const leaveGroupMutation = graphql(LEAVE_GROUP_MUTATION, {
   }),
 });
 
-const mapStateToProps = ({ auth }) => ({
-  auth,
-});
+const mapStateToProps = ({ auth }) => {
+  // auth,
+  console.log("group details auth => ", auth)
+  return { auth };
+};
 
 export default compose(
   connect(mapStateToProps),

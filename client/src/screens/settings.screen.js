@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { connect } from 'react-redux';
 import { graphql, compose } from 'react-apollo';
 
@@ -86,6 +87,7 @@ class Settings extends Component {
     super(props);
     this.state = {};
     this.logout = this.logout.bind(this);
+    this.updateUsername = this.updateUsername.bind(this);
   }
 
   logout() {
@@ -95,7 +97,7 @@ class Settings extends Component {
   // eslint-disable-next-line
   updateUsername(username) {
     // eslint-disable-next-line
-    console.log('TODO: update username');
+    console.log("usenapme => ", username);
   }
   render() {
     const { loading, user } = this.props;
@@ -114,14 +116,19 @@ class Settings extends Component {
         <View style={styles.userContainer}>
           <View style={styles.userInner}>
             <TouchableOpacity style={styles.imageContainer}>
-              <Image
+              {/* <Image
                 style={styles.userImage}
                 source={{ uri: 'https://reactjs.org/logo-og.png' }}
+              /> */}
+              <Icon
+                name="address-card"
+                size={80}
+                // color={'#8c8c8c'}
               />
               <Text>edit</Text>
             </TouchableOpacity>
             <Text style={styles.inputInstructions}>
-              Update your name and add an optional profile picture
+              Update your name and add an optional profile picture (Option to come in the next release)
             </Text>
           </View>
           <View style={styles.inputBorder}>
@@ -135,6 +142,8 @@ class Settings extends Component {
         </View>
         <Text style={styles.emailHeader}>EMAIL</Text>
         <Text style={styles.email}>{user.email}</Text>
+
+        <Button title="Save changes" onPress={this.updateUsername} />
         <Button title="Logout" onPress={this.logout} />
       </View>
     );

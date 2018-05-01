@@ -40,6 +40,7 @@ export const Schema = [`
     id: Int! # unique id for the group
     name: String # name of the group
     users: [User]! # users in the group
+    ownerId: Int # user id of the owner of the group
     messages(first: Int, after: String, last: Int, before: String): MessageConnection # messages sent to the group
   }
 
