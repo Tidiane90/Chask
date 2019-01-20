@@ -15,7 +15,8 @@ import { connect } from 'react-redux';
 import { graphql, compose } from 'react-apollo';
 
 import USER_QUERY from '../graphql/user.query';
-import { logout } from '../actions/auth.actions';
+import UPDATE_USER_MUTATION from '../graphql/update-user.mutation';
+import { logout, setCurrentUser } from '../actions/auth.actions';
 
 const styles = StyleSheet.create({
   container: {
@@ -30,7 +31,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
   },
-  emailHeader: {
+  subtitleHeader: {
     backgroundColor: '#dbdbdb',
     color: '#777',
     paddingHorizontal: 16,
@@ -76,6 +77,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingRight: 16,
   },
+  buttonSettings: {
+    padding: 10,
+  }
 });
 
 class Settings extends Component {
@@ -86,8 +90,9 @@ class Settings extends Component {
   constructor(props) {
     super(props);
     this.state = {};
+    // this.state = { username: this.props.user.username };
     this.logout = this.logout.bind(this);
-    this.updateUsername = this.updateUsername.bind(this);
+    this.updateUser = this.updateUser.bind(this);
   }
 
   logout() {
@@ -95,13 +100,38 @@ class Settings extends Component {
   }
 
   // eslint-disable-next-line
-  updateUsername(username) {
-    // eslint-disable-next-line
-    console.log("usenapme => ", username);
+  updateUser() {
+    //updateUser eslint-disable-next-line
+
+    console.log("username => ",this.state.username );
+    console.log("id => ", this.props.auth.id);
+
+    this.props.updateUser({
+      id: this.props.auth.id,
+      name: this.state.username,
+    })
+    .then(() => {
+      console.log("new props username => ");
+      console.log(this.props.user.username);
+
+      console.log("props.user => ")
+      console.log(this.props.user)
+
+      // this.props.dispatch(setCurrentUser(this.props.user));
+      //   this.setState({
+      //     loading: false,
+      //   });
+    })
+    .catch((e) => {
+        console.log("error => ");
+        console.log(e);
+      })
   }
   render() {
     const { loading, user } = this.props;
-
+    console.log("auth in settings")
+    console.log(this.props)
+    console.log(this.state)
     // render loading placeholder while we fetch data
     if (loading || !user) {
       return (
@@ -137,14 +167,20 @@ class Settings extends Component {
               placeholder={user.username}
               style={styles.input}
               defaultValue={user.username}
+              value={this.state.username}
             />
           </View>
         </View>
-        <Text style={styles.emailHeader}>EMAIL</Text>
+        
+        <Text style={styles.subtitleHeader}>EMAIL</Text>
         <Text style={styles.email}>{user.email}</Text>
-
-        <Button title="Save changes" onPress={this.updateUsername} />
-        <Button title="Logout" onPress={this.logout} />
+        <Text style={styles.subtitleHeader}>CURRENT WORKSPACE</Text>
+        <Text style={styles.email}>{}</Text>
+        
+        <View style={styles.buttonSettings}>
+          {/* <Button title="Save changes" onPress={this.updateUser} /> */}
+          <Button title="Logout" onPress={this.logout} />
+        </View>
       </View>
     );
   }
@@ -163,6 +199,7 @@ Settings.propTypes = {
   user: PropTypes.shape({
     username: PropTypes.string,
   }),
+  // updateUser: PropTypes.func.isRequired,
 };
 
 const userQuery = graphql(USER_QUERY, {
@@ -172,12 +209,53 @@ const userQuery = graphql(USER_QUERY, {
     loading, user,
   }),
 });
+/*
+const updateUserMutation = graphql(UPDATE_USER_MUTATION, {
+  props: ({ ownProps, mutate }) => ({
+    updateUser: ({ id, name }) =>
+      mutate({
+        variables: { id, name },
+        optimisticResponse: {
+          __typename: 'Mutation',
+          updateUser: {
+            __typename: 'User',
+            id: ownProps.auth.id, // we know the id
+            username: name, // we know what the new username will be
+          },
+        },
+        update: (store, { data: { updateUser } }) => {
+          // Read the data from our cache for this query.
+          const data = store.readQuery({ query: USER_QUERY, variables: { id: ownProps.auth.id } }); 
+          
+          console.log("new name => ", name)
+          console.log("data => ", data)
+          // Add our new username from the mutation to the user.
+
+          if(data.user.username !== name )
+            data.user.username = name;
+
+          // Write our data back to the cache.
+          store.writeQuery({
+            query: USER_QUERY,
+            variables: { id: ownProps.auth.id }, 
+            data,
+          });
+        },
+      }),
+  }),
+});
+*/
+
 
 const mapStateToProps = ({ auth }) => ({
   auth,
 });
 
+// Nya.Bosco2@yahoo.com
+// Chadrick42@yahoo.com
+
 export default compose(
   connect(mapStateToProps),
   userQuery,
+  // updateUserMutation,
 )(Settings);

@@ -28,9 +28,18 @@ import GROUP_ADDED_SUBSCRIPTION from './graphql/group-added.subscription';
 import { wsClient } from './app';
 import { LOGOUT } from './constants/constants';
 
+const TestScreen = title => () => (
+  <View >
+    <Text>
+      {title}
+    </Text>
+  </View>
+);
+
 // tabs in main screen
 const MainScreenNavigator = TabNavigator({
   Chats: { screen: Groups },
+  Workflows: { screen: TestScreen('Workflows') },
   Settings: { screen: Settings },
 }, {
   initialRouteName: 'Chats',
@@ -63,7 +72,7 @@ export const navigationReducer = (state = initialState, action) => {
   switch (action.type) {
     case REHYDRATE:
       // convert persisted data to Immutable and confirm rehydration
-      if (!action.payload /*|| !action.payload.auth || !action.payload.auth.jwt*/) {
+      if (!action.payload || !action.payload.auth || !action.payload.auth.jwt) {
         const { routes, index } = state;
         if (routes[index].routeName !== 'Signin') {
           nextState = AppNavigator.router.getStateForAction(
@@ -72,8 +81,8 @@ export const navigationReducer = (state = initialState, action) => {
           );
         }
       }
-      console.log("-----------------------------")
-      console.log("action.payload => ", action.payload)
+      // console.log("-----------------------------")
+      // console.log("action.payload => ", action.payload)
       break;
     case LOGOUT:
       const { routes, index } = state;
@@ -85,10 +94,10 @@ export const navigationReducer = (state = initialState, action) => {
       }
       break;
     default:
-      console.log("2")
-      console.log("action => ", action)
-      console.log("state => ", state)
-      console.log("action.payload => ", action.payload)
+      // console.log("2")
+      // console.log("action => ", action)
+      // console.log("state => ", state)
+      // console.log("action.payload => ", action.payload)
       // console.log("action.payload => ", action.payload.auth)
       nextState = AppNavigator.router.getStateForAction(action, state);
       break;
@@ -171,12 +180,13 @@ AppWithNavigationState.propTypes = {
   }),
 };
 
-const mapStateToProps = ({ auth, nav }) => {
-  console.log("auth => ", auth)
-  return { auth, nav }
-  // auth,
-  // nav,
-};
+const mapStateToProps = ({ auth, nav }) => ({
+  // console.log("auth in navigation")
+  // console.log(auth)
+  // return { auth, nav }
+  auth,
+  nav,
+});
 
 const userQuery = graphql(USER_QUERY, {
   skip: ownProps => !ownProps.auth || !ownProps.auth.jwt,
@@ -186,6 +196,7 @@ const userQuery = graphql(USER_QUERY, {
     user,
     refetch,
     subscribeToMessages() {
+      console.log(user);
       return subscribeToMore({
         document: MESSAGE_ADDED_SUBSCRIPTION,
         variables: {

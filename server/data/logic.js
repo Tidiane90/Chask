@@ -1,13 +1,41 @@
-import { Group, Message, User } from './connectors';
+import { ApolloError, AuthenticationError, ForbiddenError } from 'apollo-server';
+import { Workspace, Group, Message, User } from './connectors';
+
+// function to send a message through the chask chatbot
+function sendMessageChatbot(idGroup, idUserOwner) {
+  User.findOne({
+    where: { id: idUserOwner },
+  }).then((userOwner) => {
+    Message.create({
+      userId: 1,
+      groupId: idGroup,
+      text: "Hello all, the owner of this group is " +userOwner.username +"!!!",
+    })
+  });
+}
 
 // reusable function to check for a user with context
 function getAuthenticatedUser(ctx) {
   return ctx.user.then((user) => {
     if (!user) {
-      return Promise.reject('Unauthorized');
+      throw new AuthenticationError('Unauthenticated user autentication');
     }
     return user;
   });
+}
+
+export const workspaceLogic = {
+  // users(workspace) {
+  //   return workspace.getUsers({ attributes: ['id', 'username'] });
+  // },
+  query(_, { id }, ctx) {
+    return getAuthenticatedUser(ctx).then((user) => {
+      Workspace.findOne({ 
+        where: { id }
+      })
+      return Promise.reject('Unauthorized');
+    });
+  },
 }
 
 export const messageLogic = {
@@ -28,123 +56,120 @@ export const messageLogic = {
                 groupId,
             });
             }
-            return Promise.reject('Unauthorized');
+            throw new ForbiddenError('Unauthorized message creation');
         }));
     },
 };
 
 export const groupLogic = {
-    users(group) {
-      return group.getUsers({ attributes: ['id', 'username'] });
-    },
-    messages(group, { first, last, before, after }) {
-        // base query -- get messages from the right group
-        const where = { groupId: group.id };
+  users(group) {
+    return group.getUsers({ attributes: ['id', 'username'] });
+  },
+  messages(group, { first, last, before, after }) {
+      // base query -- get messages from the right group
+      const where = { groupId: group.id };
 
-        // because we return messages from newest -> oldest
-        // before actually means newer (date > cursor)
-        // after actually means older (date < cursor)
-        if (before) {
-          // convert base-64 to utf8 iso date and use in Date constructor
-          where.id = { $gt: Buffer.from(before, 'base64').toString() };
-        }
-        if (after) {
-          where.id = { $lt: Buffer.from(after, 'base64').toString() };
-        }
-        return Message.findAll({
-          where,
-          order: [['id', 'DESC']],
-          limit: first || last,
-        }).then((messages) => {
-          const edges = messages.map(message => ({
-            cursor: Buffer.from(message.id.toString()).toString('base64'), // convert createdAt to cursor
-            node: message, // the node is the message itself
-          }));
-          return {
-            edges,
-            pageInfo: {
-              hasNextPage() {
-                if (messages.length < (last || first)) {
-                  return Promise.resolve(false);
-                }
-                return Message.findOne({
-                  where: {
-                    groupId: group.id,
-                    id: {
-                      [before ? '$gt' : '$lt']: messages[messages.length - 1].id,
-                    },
+      // because we return messages from newest -> oldest
+      // before actually means newer (date > cursor)
+      // after actually means older (date < cursor)
+      if (before) {
+        // convert base-64 to utf8 iso date and use in Date constructor
+        where.id = { $gt: Buffer.from(before, 'base64').toString() };
+      }
+      if (after) {
+        where.id = { $lt: Buffer.from(after, 'base64').toString() };
+      }
+      return Message.findAll({
+        where,
+        order: [['id', 'DESC']],
+        limit: first || last,
+      }).then((messages) => {
+        const edges = messages.map(message => ({
+          cursor: Buffer.from(message.id.toString()).toString('base64'), // convert createdAt to cursor
+          node: message, // the node is the message itself
+        }));
+        return {
+          edges,
+          pageInfo: {
+            hasNextPage() {
+              if (messages.length < (last || first)) {
+                return Promise.resolve(false);
+              }
+              return Message.findOne({
+                where: {
+                  groupId: group.id,
+                  id: {
+                    [before ? '$gt' : '$lt']: messages[messages.length - 1].id,
                   },
-                  order: [['id', 'DESC']],
-                }).then(message => !!message);
-              },
-              hasPreviousPage() {
-                return Message.findOne({
-                  where: {
-                    groupId: group.id,
-                    id: where.id,
-                  },
-                  order: [['id']],
-                }).then(message => !!message);
-              },
+                },
+                order: [['id', 'DESC']],
+              }).then(message => !!message);
             },
-          };
+            hasPreviousPage() {
+              return Message.findOne({
+                where: {
+                  groupId: group.id,
+                  id: where.id,
+                },
+                order: [['id']],
+              }).then(message => !!message);
+            },
+          },
+        };
+      });
+  },
+  query(_, { id }, ctx) {
+    return getAuthenticatedUser(ctx).then(user => Group.findOne({
+      where: { id },
+      include: [{
+        model: User,
+        where: { id: user.id },
+      }],
+    }));
+  },
+  createGroup(_, { name, userIds }, ctx) {
+    return getAuthenticatedUser(ctx)
+      .then(user => user.getFriends({ where: { id: { $in: userIds } } })
+      .then((friends) => {  // eslint-disable-line arrow-body-style
+        return Group.create({
+          name,
+          ownerId: user.id,
+        }).then((group) => {  // eslint-disable-line arrow-body-style
+          sendMessageChatbot(group.id, user.id);
+          return group.addUsers([user, ...friends]).then(() => {
+            group.users = [user, ...friends];
+            return group;
+          });
         });
-    },
-    query(_, { id }, ctx) {
-      return getAuthenticatedUser(ctx).then(user => Group.findOne({
+      }));
+  },
+  deleteGroup(_, { id }, ctx) {
+    return getAuthenticatedUser(ctx).then((user) => { // eslint-disable-line arrow-body-style
+      return Group.findOne({
         where: { id },
         include: [{
           model: User,
           where: { id: user.id },
         }],
-      }));
-    },
-    createGroup(_, { name, userIds }, ctx) {
-      return getAuthenticatedUser(ctx)
-        .then(user => user.getFriends({ where: { id: { $in: userIds } } })
-        .then((friends) => {  // eslint-disable-line arrow-body-style
-          return Group.create({
-            name,
-            ownerId: user.id,
-          }).then((group) => {  // eslint-disable-line arrow-body-style
-            return group.addUsers([user, ...friends]).then(() => {
-              group.users = [user, ...friends];
-              return group;
-            });
-          });
-        }));
-    },
-    deleteGroup(_, { id }, ctx) {
-      return getAuthenticatedUser(ctx).then((user) => { // eslint-disable-line arrow-body-style
-        return Group.findOne({
-          where: { id },
-          include: [{
-            model: User,
-            where: { id: user.id },
-          }],
-        }).then(group => group.getUsers()
-          .then(users => group.removeUsers(users))
-          .then(() => Message.destroy({ where: { groupId: group.id } }))
-          .then(() => group.destroy()));
-      });
-    },
-    leaveGroup(_, { id }, ctx) {
-      return getAuthenticatedUser(ctx).then((user) => {
-        if (!user) {
-          return Promise.reject('Unauthorized');
+      }).then(group => group.getUsers()
+        .then(users => group.removeUsers(users))
+        .then(() => Message.destroy({ where: { groupId: group.id } }))
+        .then(() => group.destroy()));
+    });
+  },
+  leaveGroup(_, { id }, ctx) {
+    return getAuthenticatedUser(ctx).then((user) => {
+      return Group.findOne({
+        where: { id },
+        include: [{
+          model: User,
+          where: { id: user.id },
+        }],
+      }).then((group) => {
+        if (!group) {
+          throw new ApolloError('No group found', 404);
         }
-        return Group.findOne({
-          where: { id },
-          include: [{
-            model: User,
-            where: { id: user.id },
-          }],
-        }).then((group) => {
-          if (!group) {
-            Promise.reject('No group found');
-          }
-
-          return group.removeUser(user.id)
+        return group.removeUser(user.id)
           .then(() => group.getUsers())
           .then((users) => {
             // if the last user is leaving, remove the group
@@ -153,92 +178,104 @@ export const groupLogic = {
             }
             return { id };
           });
-        });
       });
-    },
-    updateGroup(_, { id, name }, ctx) {
-      return getAuthenticatedUser(ctx).then((user) => {  // eslint-disable-line arrow-body-style
-        return Group.findOne({
-          where: { id },
-          include: [{
-            model: User,
-            where: { id: user.id },
-          }],
-        }).then(group => group.update({ name }));
-      });
-    },
+    });
+  },
+  updateGroup(_, { id, name }, ctx) {
+    return getAuthenticatedUser(ctx).then((user) => {  // eslint-disable-line arrow-body-style
+      return Group.findOne({
+        where: { id },
+        include: [{
+          model: User,
+          where: { id: user.id },
+        }],
+      }).then(group => group.update({ name }));
+    });
+  },
 };
 
 export const userLogic = {
-    email(user, args, ctx) {
-      return getAuthenticatedUser(ctx).then((currentUser) => {
-        if (currentUser.id === user.id) {
-          return currentUser.email;
-        }
-        return Promise.reject('Unauthorized');
+  updateUser(_, { id, username }, ctx) {
+    return getAuthenticatedUser(ctx).then((user) => {
+      return User.findOne({ where: { id } })
+        .then(user => user.update({ username }))
+    });
+  },
+  email(user, args, ctx) {
+    return getAuthenticatedUser(ctx).then((currentUser) => {
+      if (currentUser.id === user.id) {
+        return currentUser.email;
+      }
+      throw new ForbiddenError('Unauthorized');
+    });
+  },
+  friends(user, args, ctx) {
+    return getAuthenticatedUser(ctx).then((currentUser) => {
+      if (currentUser.id !== user.id) {
+        throw new ForbiddenError('Unauthorized');
+      }
+      return user.getFriends({ attributes: ['id', 'username'] });
+    });
+  },
+  workspace(user, args, ctx) {
+    return getAuthenticatedUser(ctx).then((currentUser) => {
+      if (currentUser.id !== user.id) {
+        throw new ForbiddenError('Unauthorized');
+      }
+      return user.getWorkspace();
+    });
+  },
+  groups(user, args, ctx) {
+    return getAuthenticatedUser(ctx).then((currentUser) => {
+      if (currentUser.id !== user.id) {
+        throw new ForbiddenError('Unauthorized');
+      }
+      return user.getGroups();
+    });
+  },
+  jwt(user) {
+    return Promise.resolve(user.jwt);
+  },
+  messages(user, args, ctx) {
+    return getAuthenticatedUser(ctx).then((currentUser) => {
+      if (currentUser.id !== user.id) {
+        throw new ForbiddenError('Unauthorized');
+      }
+      return Message.findAll({
+        where: { userId: user.id },
+        order: [['createdAt', 'DESC']],
       });
-    },
-    friends(user, args, ctx) {
-      return getAuthenticatedUser(ctx).then((currentUser) => {
-        if (currentUser.id !== user.id) {
-          return Promise.reject('Unauthorized');
-        }
-        return user.getFriends({ attributes: ['id', 'username'] });
-      });
-    },
-    groups(user, args, ctx) {
-      return getAuthenticatedUser(ctx).then((currentUser) => {
-        if (currentUser.id !== user.id) {
-          return Promise.reject('Unauthorized');
-        }
-        return user.getGroups();
-      });
-    },
-    jwt(user) {
-      return Promise.resolve(user.jwt);
-    },
-    messages(user, args, ctx) {
-      return getAuthenticatedUser(ctx).then((currentUser) => {
-        if (currentUser.id !== user.id) {
-          return Promise.reject('Unauthorized');
-        }
-        return Message.findAll({
-          where: { userId: user.id },
-          order: [['createdAt', 'DESC']],
-        });
-      });
-    },
-    query(_, args, ctx) {
-      return getAuthenticatedUser(ctx).then((user) => {
-        if (user.id === args.id || user.email === args.email) {
-          return user;
-        }
-        return Promise.reject('Unauthorized');
-      });
-    },
+    });
+  },
+  query(_, args, ctx) {
+    return getAuthenticatedUser(ctx).then((user) => {
+      if (user.id === args.id || user.email === args.email) {
+        return user;
+      }
+      throw new ForbiddenError('Unauthorized');
+    });
+  },
 };
 
 export const subscriptionLogic = {
-    groupAdded(baseParams, args, ctx) {
+    groupAdded(params, args, ctx) {
       return getAuthenticatedUser(ctx)
         .then((user) => {
           if (user.id !== args.userId) {
-            return Promise.reject('Unauthorized');
+            throw new ForbiddenError('Unauthorized');
           }
-          baseParams.context = ctx;
-          return baseParams;
+          return Promise.resolve();
         });
     },
-    messageAdded(baseParams, args, ctx) {
+    messageAdded(params, args, ctx) {
       return getAuthenticatedUser(ctx)
         .then(user => user.getGroups({ where: { id: { $in: args.groupIds } }, attributes: ['id'] })
         .then((groups) => {
           // user attempted to subscribe to some groups without access
           if (args.groupIds.length > groups.length) {
-            return Promise.reject('Unauthorized');
+            throw new ForbiddenError('Unauthorized');
           }
-          baseParams.context = ctx;
-          return baseParams;
+          return Promise.resolve();
         }));
     },
   };

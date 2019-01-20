@@ -11,11 +11,12 @@ import { ApolloLink } from 'apollo-link';
 import { ApolloProvider } from 'react-apollo';
 import { composeWithDevTools } from 'redux-devtools-extension';
 import { createHttpLink } from 'apollo-link-http';
-import { onError } from 'apollo-link-error';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
 import { ReduxCache, apolloReducer } from 'apollo-cache-redux';
+// import { InMemoryCache } from 'apollo-cache-inmemory';
 import ReduxLink from 'apollo-link-redux';
+import { onError } from 'apollo-link-error';
 import { WebSocketLink } from 'apollo-link-ws';
 import { getMainDefinition } from 'apollo-utilities';
 import { SubscriptionClient } from 'subscriptions-transport-ws';
@@ -30,7 +31,7 @@ import auth from './reducers/auth.reducer';
 import { logout } from './actions/auth.actions';
 
 const URL = '10.0.2.2:8080'; // set your comp's url here
-
+// const URL = 'localhost:8080';
 const config = {
   key: 'root',
   storage: AsyncStorage,
@@ -55,6 +56,7 @@ const store = createStore(
 const persistor = persistStore(store);
 
 const cache = new ReduxCache({ store });
+// const cache = new InMemoryCache();
 
 const reduxLink = new ReduxLink(store);
 
@@ -107,7 +109,7 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
 });
 
 // Create WebSocket client
-export const wsClient = new SubscriptionClient(`ws://${URL}/subscriptions`, {
+export const wsClient = new SubscriptionClient(`ws://${URL}/graphql`, {
   lazy: true,
   reconnect: true,
   connectionParams() {

@@ -9,11 +9,11 @@
 //   export default Schema;
 
 import { addMockFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
-
+import { gql } from 'apollo-server';
 import { Mocks } from './mocks';
 import { Resolvers } from './resolvers';
 
-export const Schema = [`
+export const typeDefs = gql`
   # declare custom scalars
   scalar Date
 
@@ -35,12 +35,19 @@ export const Schema = [`
     hasPreviousPage: Boolean!
   }
 
+  # a workspace entity
+  type Workspace {
+    id: Int! # unique id for the workspace
+    name: String! # name of the workspace
+    users: [User] # email of the users in the workspace
+  }
+
   # a group chat entity
   type Group {
     id: Int! # unique id for the group
     name: String # name of the group
     users: [User]! # users in the group
-    ownerId: Int # user id of the owner of the group
+    ownerId: Int! # user id of the owner of the group
     messages(first: Int, after: String, last: Int, before: String): MessageConnection # messages sent to the group
   }
 
@@ -49,6 +56,7 @@ export const Schema = [`
     id: Int! # unique id for the user
     email: String! # we will also require a unique email per user
     username: String # this is the name we'll show other users
+    workspace: Workspace # the workspaces the user belongs to
     messages: [Message] # messages sent by user
     groups: [Group] # groups the user belongs to
     friends: [User] # user's friends/contacts
@@ -64,8 +72,28 @@ export const Schema = [`
     createdAt: Date! # when message was created
   }
 
+  # a story entity
+  type Story {
+    id: Int! # unique id for the story
+    name: String # name of the story
+    users: [User]! # users in the story
+    ownerId: Int! # user id of the owner of the story
+  }
+
+  # a task entity
+  type Task {
+    id: Int! # unique id for the task
+    name: String # name of the task
+    belongsTo: Story! # group message was sent in
+    users: [User]! # users in the task
+    ownerId: Int! # user id of the owner of the task
+  }
+
   # query for types
   type Query {
+    # Return a workspace name by their id
+    workspace(id: Int): Workspace
+
     # Return a user by their email or id
     user(email: String, id: Int): User
 
@@ -82,11 +110,12 @@ export const Schema = [`
     # text is the message text
     # userId is the id of the user sending the message
     # groupId is the id of the group receiving the message
-    createMessage(text: String!, groupId: Int!): Message
-    createGroup(name: String!, userIds: [Int]): Group
-    deleteGroup(id: Int!): Group
+    createMessage(text: String!, groupId: Int!): Message # let user create message
+    createGroup(name: String!, userIds: [Int]): Group # let user create group
+    deleteGroup(id: Int!): Group # let user delete  group
     leaveGroup(id: Int!): Group # let user leave group
     updateGroup(id: Int!, name: String): Group
+    updateUser(id: Int!, name: String!): User
     login(email: String!, password: String!): User
     signup(email: String!, password: String!, username: String): User
   }
@@ -103,13 +132,13 @@ export const Schema = [`
     mutation: Mutation
     subscription: Subscription
   }
-`];
+`;
 // export default Schema;
 
-export const executableSchema = makeExecutableSchema({
-  typeDefs: Schema,
-  resolvers: Resolvers,
-});
+// export const executableSchema = makeExecutableSchema({
+//   typeDefs: Schema,
+//   resolvers: Resolvers,
+// });
 
 // addMockFunctionsToSchema({
 //   schema: executableSchema,
@@ -117,5 +146,5 @@ export const executableSchema = makeExecutableSchema({
 //   preserveResolvers: true,
 // });
 
-export default executableSchema;
+export default typeDefs;
 

@@ -5,7 +5,7 @@ dotenv.config({ silent: true });
 export const {JWT_SECRET} = process.env;
 
 const defaults = {
-  JWT_SECRET: 'secret',
+  JWT_SECRET: 'your_secret',
 };
 // sdsdsd
 Object.keys(defaults).forEach((key) => {

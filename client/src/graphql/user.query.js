@@ -9,6 +9,10 @@ export const USER_QUERY = gql`
       id
       email
       username
+      workspace {
+        id
+        name
+      }
       groups {
         id
         name

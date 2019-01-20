@@ -15,11 +15,9 @@ import {
 import { graphql, compose } from 'react-apollo';
 import { connect } from 'react-redux';
 
-import {
-    setCurrentUser,
-  } from '../actions/auth.actions';
-  import LOGIN_MUTATION from '../graphql/login.mutation';
-  import SIGNUP_MUTATION from '../graphql/signup.mutation';
+import { setCurrentUser } from '../actions/auth.actions';
+import LOGIN_MUTATION from '../graphql/login.mutation';
+import SIGNUP_MUTATION from '../graphql/signup.mutation';
 
 const styles = StyleSheet.create({
   container: {
@@ -101,11 +99,16 @@ class Signin extends Component {
 
   login() {
     const { email, password } = this.state;
+    // const name2 = "testworkspace";
+    // const email2= "Chadrick42@yahoo.com";
+    // const password2 = "quis";
     this.setState({
       loading: true,
     });
     this.props.login({ email, password })
       .then(({ data: { login: user } }) => {
+        console.log("user =>")
+        console.log(user)
         this.props.dispatch(setCurrentUser(user));
         this.setState({
           loading: false,
@@ -170,14 +173,19 @@ class Signin extends Component {
           </View> : undefined}
 
         <View style={styles.inputContainer}>
+          {/* <TextInput
+              onChangeText={name => this.setState({ name })}
+              placeholder={'Type Workspace'}
+              style={styles.input}
+          /> */}
           <TextInput
             onChangeText={email => this.setState({ email })}
-            placeholder={'Email'}
+            placeholder={'Type Email'}
             style={styles.input}
           />
           <TextInput
             onChangeText={password => this.setState({ password })}
-            placeholder={'Password'}
+            placeholder={'Type Password'}
             secureTextEntry
             style={styles.input}
           />

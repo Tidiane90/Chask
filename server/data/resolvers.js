@@ -1,16 +1,17 @@
 import GraphQLDate from 'graphql-date';
-import { withFilter } from 'graphql-subscriptions';
+import { withFilter } from 'apollo-server';
 import { map } from 'lodash';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-import { Group, Message, User } from './connectors';
+import { Workspace, Group, Message, User } from './connectors';
 import { pubsub } from '../subscriptions';
 import { JWT_SECRET } from '../config';
-import { groupLogic, messageLogic, userLogic } from './logic';
+import { workspaceLogic, groupLogic, messageLogic, userLogic, subscriptionLogic } from './logic';
 
 const MESSAGE_ADDED_TOPIC = 'messageAdded';
 const GROUP_ADDED_TOPIC = 'groupAdded';
+const USER_UPDATED_TOPIC = 'userUpdated';
 
 export const Resolvers = {
   Date: GraphQLDate,
@@ -36,8 +37,14 @@ export const Resolvers = {
     user(_, args, ctx) {
       return userLogic.query(_, args, ctx);
     },
+    workspace(_, args, ctx) {
+      return workspaceLogic.query(_, args, ctx);
+    },
   },
   Mutation: {
+    updateUser(_, args, ctx) {
+      return userLogic.updateUser(_, args, ctx);
+    },
     createMessage(_, args, ctx) {
       return messageLogic.createMessage(_, args, ctx)
         .then((message) => {
@@ -62,9 +69,15 @@ export const Resolvers = {
       return groupLogic.updateGroup(_, args, ctx);
     },
     login(_, { email, password }, ctx) {
+      console.log("testtststdctsd")
       // find user by email
       return User.findOne({ where: { email } }).then((user) => {
+        console.log("-------------------")
+        console.log(user)
+        // console.log("Workspace => ")
+        // console.log(name);
         if (user) {
+          // console.log(user.getWorkspace());
           // validate password
           return bcrypt.compare(password, user.password).then(res => {
             if (res) {
@@ -109,7 +122,10 @@ export const Resolvers = {
   Subscription: {
     messageAdded: {
       subscribe: withFilter(
-        () => pubsub.asyncIterator(MESSAGE_ADDED_TOPIC),
+        (payload, args, ctx) => pubsub.asyncAuthIterator(
+          MESSAGE_ADDED_TOPIC,
+          subscriptionLogic.messageAdded(payload, args, ctx),
+        ),
         (payload, args, ctx) => {
           return ctx.user.then((user) => {
             return Boolean(
@@ -123,7 +139,10 @@ export const Resolvers = {
     },
     groupAdded: {
       subscribe: withFilter(
-        () => pubsub.asyncIterator(GROUP_ADDED_TOPIC),
+        (payload, args, ctx) => pubsub.asyncAuthIterator(
+          GROUP_ADDED_TOPIC,
+          subscriptionLogic.groupAdded(payload, args, ctx),
+        ),
         (payload, args, ctx) => {
           return ctx.user.then((user) => {
             return Boolean(
@@ -136,6 +155,11 @@ export const Resolvers = {
       ),
     },
   },
+  // Workspace: {
+  //   users(workspace, args, ctx) {
+  //     return workspaceLogic.users(workspace, args, ctx);
+  //   },
+  // },
   Group: {
     users(group, args, ctx) {
       return groupLogic.users(group, args, ctx);
@@ -161,6 +185,9 @@ export const Resolvers = {
     },
     groups(user, args, ctx) {
       return userLogic.groups(user, args, ctx);
+    },
+    workspace(user, args, ctx) {
+      return userLogic.workspace(user, args, ctx);
     },
     jwt(user, args, ctx) {
       return userLogic.jwt(user, args, ctx);

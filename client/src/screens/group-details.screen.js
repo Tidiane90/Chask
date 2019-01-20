@@ -197,8 +197,8 @@ class GroupDetails extends Component {
           )}
           ListFooterComponent={() => (
             <View>
-              { console.log("group => ", group) }
-              { console.log("auth id qsqsdqdqed=> ", this.props.auth.id) }
+              {/* { console.log("group => ", group) }
+              { console.log("auth id => ", this.props.auth.id) } */}
               {   
                 group.ownerId == this.props.auth.id ? 
                 <Button title="Delete Group" onPress={this.deleteGroup} />
@@ -293,7 +293,7 @@ const leaveGroupMutation = graphql(LEAVE_GROUP_MUTATION, {
 
 const mapStateToProps = ({ auth }) => {
   // auth,
-  console.log("group details auth => ", auth)
+  // console.log("group details auth => ", auth)
   return { auth };
 };
 
