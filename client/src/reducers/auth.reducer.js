@@ -16,8 +16,8 @@ const auth = (state = initialState, action) => {
             .set('loading', false);
 
     case SET_CURRENT_USER:
-    console.log(action.user)
-    console.log(action)
+    // console.log(action.user)
+    // console.log(action)
         return state.merge(action.user);
 
     case LOGOUT:

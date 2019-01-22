@@ -39,7 +39,7 @@ export const typeDefs = gql`
   type Workspace {
     id: Int! # unique id for the workspace
     name: String! # name of the workspace
-    users: [User] # email of the users in the workspace
+    users: [User] # users in the workspace
   }
 
   # a group chat entity
@@ -56,7 +56,7 @@ export const typeDefs = gql`
     id: Int! # unique id for the user
     email: String! # we will also require a unique email per user
     username: String # this is the name we'll show other users
-    workspace: Workspace # the workspaces the user belongs to
+    workspace: Workspace # the workspace the user belongs to
     messages: [Message] # messages sent by user
     groups: [Group] # groups the user belongs to
     friends: [User] # user's friends/contacts
@@ -77,7 +77,7 @@ export const typeDefs = gql`
     id: Int! # unique id for the story
     name: String # name of the story
     users: [User]! # users in the story
-    ownerId: Int! # user id of the owner of the story
+    ownerId: Int! # user id of the owner of the user story group
   }
 
   # a task entity
@@ -91,7 +91,7 @@ export const typeDefs = gql`
 
   # query for types
   type Query {
-    # Return a workspace name by their id
+    # Return a workspace by their id
     workspace(id: Int): Workspace
 
     # Return a user by their email or id
@@ -116,7 +116,7 @@ export const typeDefs = gql`
     leaveGroup(id: Int!): Group # let user leave group
     updateGroup(id: Int!, name: String): Group
     updateUser(id: Int!, name: String!): User
-    login(email: String!, password: String!): User
+    login(workspaceName: String!, email: String!, password: String!): User
     signup(email: String!, password: String!, username: String): User
   }
 
@@ -125,6 +125,7 @@ export const typeDefs = gql`
     # for any of the groups with one of these groupIds
     messageAdded(groupIds: [Int]): Message
     groupAdded(userId: Int): Group
+    #usernameChanged(username: String!): User # update the username
   }
 
   schema {

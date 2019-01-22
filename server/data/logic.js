@@ -1,5 +1,9 @@
 import { ApolloError, AuthenticationError, ForbiddenError } from 'apollo-server';
 import { Workspace, Group, Message, User } from './connectors';
+import { _ } from 'lodash';
+import Sequelize from 'sequelize';
+
+const Op = Sequelize.Op;
 
 // function to send a message through the chask chatbot
 function sendMessageChatbot(idGroup, idUserOwner) {
@@ -25,9 +29,9 @@ function getAuthenticatedUser(ctx) {
 }
 
 export const workspaceLogic = {
-  // users(workspace) {
-  //   return workspace.getUsers({ attributes: ['id', 'username'] });
-  // },
+  users(workspace) {
+    return workspace.getUsers({ attributes: ['id', 'username'] });
+  },
   query(_, { id }, ctx) {
     return getAuthenticatedUser(ctx).then((user) => {
       Workspace.findOne({ 
@@ -62,6 +66,14 @@ export const messageLogic = {
 };
 
 export const groupLogic = {
+  // ownerId(_, { group }, ctx) {
+  //   return getAuthenticatedUser(ctx).then((currentUser) => {
+  //     if (currentUser.id === user.id) {
+  //       return group.ownerId;
+  //     }
+  //     throw new ForbiddenError('Unauthorized');
+  //   });
+  // }
   users(group) {
     return group.getUsers({ attributes: ['id', 'username'] });
   },
@@ -129,7 +141,7 @@ export const groupLogic = {
   },
   createGroup(_, { name, userIds }, ctx) {
     return getAuthenticatedUser(ctx)
-      .then(user => user.getFriends({ where: { id: { $in: userIds } } })
+      .then(user => user.getFriends({ where: { id: { [Op.in]: userIds } } })
       .then((friends) => {  // eslint-disable-line arrow-body-style
         return Group.create({
           name,
@@ -269,13 +281,16 @@ export const subscriptionLogic = {
     },
     messageAdded(params, args, ctx) {
       return getAuthenticatedUser(ctx)
-        .then(user => user.getGroups({ where: { id: { $in: args.groupIds } }, attributes: ['id'] })
+        .then(user => user.getGroups({ where: { id: { [Op.in]: args.groupIds } }, attributes: ['id'] })
         .then((groups) => {
           // user attempted to subscribe to some groups without access
           if (args.groupIds.length > groups.length) {
             throw new ForbiddenError('Unauthorized');
           }
           return Promise.resolve();
+        })
+        .catch(err=> {
+          console.log(err)
         }));
     },
   };

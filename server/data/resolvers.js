@@ -13,7 +13,7 @@ const MESSAGE_ADDED_TOPIC = 'messageAdded';
 const GROUP_ADDED_TOPIC = 'groupAdded';
 const USER_UPDATED_TOPIC = 'userUpdated';
 
-export const Resolvers = {
+export const resolvers = {
   Date: GraphQLDate,
   PageInfo: {
     // we will have each connection supply its own hasNextPage/hasPreviousPage functions!
@@ -37,12 +37,12 @@ export const Resolvers = {
     user(_, args, ctx) {
       return userLogic.query(_, args, ctx);
     },
-    workspace(_, args, ctx) {
-      return workspaceLogic.query(_, args, ctx);
-    },
+    // workspace(_, args, ctx) {
+    //   return workspaceLogic.query(_, args, ctx);
+    // },
   },
   Mutation: {
-    updateUser(_, args, ctx) {
+    updateUser(_, { id, newName}, ctx) {
       return userLogic.updateUser(_, args, ctx);
     },
     createMessage(_, args, ctx) {
@@ -68,12 +68,12 @@ export const Resolvers = {
     updateGroup(_, args, ctx) {
       return groupLogic.updateGroup(_, args, ctx);
     },
-    login(_, { email, password }, ctx) {
+    login(_, { workspaceName, email, password }, ctx) {
       console.log("testtststdctsd")
       // find user by email
       return User.findOne({ where: { email } }).then((user) => {
         console.log("-------------------")
-        console.log(user)
+        // console.log(user)
         // console.log("Workspace => ")
         // console.log(name);
         if (user) {
@@ -91,7 +91,7 @@ export const Resolvers = {
               ctx.user = Promise.resolve(user);
               return user;
             }
-            return Promise.reject('password incorrect');
+           return Promise.reject('password incorrect');
           });
         }
         return Promise.reject('email not found');
@@ -167,6 +167,9 @@ export const Resolvers = {
     messages(group, args, ctx) {
       return groupLogic.messages(group, args, ctx);
     },
+    // ownerId(group, args, ctx) {
+    //   return groupLogic.ownerId(group, args, ctx);
+    // },
   },
   Message: {
     to(message, args, ctx) {
@@ -197,4 +200,4 @@ export const Resolvers = {
     },
   },
 };
-export default Resolvers;
+export default resolvers;

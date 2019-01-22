@@ -98,17 +98,15 @@ class Signin extends Component {
   }
 
   login() {
-    const { email, password } = this.state;
-    // const name2 = "testworkspace";
-    // const email2= "Chadrick42@yahoo.com";
-    // const password2 = "quis";
+    const { workspaceName, email, password } = this.state;
     this.setState({
       loading: true,
     });
-    this.props.login({ email, password })
+    this.props.login({ workspaceName, email, password })
       .then(({ data: { login: user } }) => {
-        console.log("user =>")
-        console.log(user)
+        // console.log("user =>")
+        // console.log(user)
+
         this.props.dispatch(setCurrentUser(user));
         this.setState({
           loading: false,
@@ -133,7 +131,7 @@ class Signin extends Component {
         loading: true,
       });
 
-    const { email, password } = this.state;
+    const { workspaceName, email, password } = this.state;
 
     this.props.signup({ email, password })
     .then(({ data: { signup: user } }) => {
@@ -173,11 +171,11 @@ class Signin extends Component {
           </View> : undefined}
 
         <View style={styles.inputContainer}>
-          {/* <TextInput
-              onChangeText={name => this.setState({ name })}
+          <TextInput
+              onChangeText={workspaceName => this.setState({ workspaceName })}
               placeholder={'Type Workspace'}
               style={styles.input}
-          /> */}
+          />
           <TextInput
             onChangeText={email => this.setState({ email })}
             placeholder={'Type Email'}
@@ -229,11 +227,26 @@ Signin.propTypes = {
   signup: PropTypes.func.isRequired,
 };
 
+// Nya.Bosco2@yahoo.com
+// Chadrick42@yahoo.com
+
+// mutation {
+//   login(
+//     email:"Chadrick42@yahoo.com",
+//   password: "eligendi")
+//   {
+//     id, 
+//     jwt,
+//     username
+//   }
+// }
+
+
 const login = graphql(LOGIN_MUTATION, {
     props: ({ mutate }) => ({
-      login: ({ email, password }) =>
+      login: ({ workspaceName, email, password }) =>
         mutate({
-          variables: { email, password },
+          variables: { workspaceName:"testworkspace", email:"Justus.Rath@gmail.com", password:"tempora" },
         }),
     }),
 });

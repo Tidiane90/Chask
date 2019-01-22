@@ -116,6 +116,7 @@ class Group extends Component {
     }
 
     render() {
+      console.log(this.props.group)
       const { id, name, messages } = this.props.group;
       return (
       <TouchableHighlight

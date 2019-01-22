@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Button,
   Image,
+  Alert, 
   StyleSheet,
   Text,
   TextInput,
@@ -90,9 +91,9 @@ class Settings extends Component {
   constructor(props) {
     super(props);
     this.state = {};
-    // this.state = { username: this.props.user.username };
+    this.state = { username: this.props.user.username };
     this.logout = this.logout.bind(this);
-    this.updateUser = this.updateUser.bind(this);
+    this.updateUsername = this.updateUsername.bind(this);
   }
 
   logout() {
@@ -100,13 +101,29 @@ class Settings extends Component {
   }
 
   // eslint-disable-next-line
-  updateUser() {
-    //updateUser eslint-disable-next-line
+  updateUsername(username) {
 
     console.log("username => ",this.state.username );
     console.log("id => ", this.props.auth.id);
 
-    this.props.updateUser({
+    // Alert.alert(
+    //   `Update username confirmation Screen:`,
+    //   "Are you sure you want to change your name?",
+    //   [
+    //     { text: 'Yes', onPress: () => 
+    //       this.props.deleteGroup(this.props.navigation.state.params.id)
+    //       .then(() => {
+    //         this.props.navigation.dispatch(resetAction);
+    //       })
+    //       .catch((e) => {
+    //         console.log(e); // eslint-disable-line no-console
+    //       })
+    //     }, // eslint-disable-line no-console
+    //     { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' }, // eslint-disable-line no-console
+    //   ],
+    // );
+
+    this.props.updateUsername({
       id: this.props.auth.id,
       name: this.state.username,
     })
@@ -129,9 +146,11 @@ class Settings extends Component {
   }
   render() {
     const { loading, user } = this.props;
-    console.log("auth in settings")
-    console.log(this.props)
-    console.log(this.state)
+    // console.log("user in settings")
+    // console.log(user)
+    // console.log("auth in settings")
+    // console.log(this.props)
+    // console.log(this.state)
     // render loading placeholder while we fetch data
     if (loading || !user) {
       return (
@@ -175,11 +194,15 @@ class Settings extends Component {
         <Text style={styles.subtitleHeader}>EMAIL</Text>
         <Text style={styles.email}>{user.email}</Text>
         <Text style={styles.subtitleHeader}>CURRENT WORKSPACE</Text>
-        <Text style={styles.email}>{}</Text>
+        <Text style={styles.email}>{user.workspace.name}</Text>
         
         <View style={styles.buttonSettings}>
-          {/* <Button title="Save changes" onPress={this.updateUser} /> */}
+          <Button title="Save changes" onPress={this.updateUsername} />
+          <Text></Text>
+          <Button title="Invite new user" onPress={this.updateUsername} />
+          <Text></Text>
           <Button title="Logout" onPress={this.logout} />
+
         </View>
       </View>
     );
@@ -199,7 +222,7 @@ Settings.propTypes = {
   user: PropTypes.shape({
     username: PropTypes.string,
   }),
-  // updateUser: PropTypes.func.isRequired,
+  updateUsername: PropTypes.func.isRequired,
 };
 
 const userQuery = graphql(USER_QUERY, {
@@ -209,21 +232,21 @@ const userQuery = graphql(USER_QUERY, {
     loading, user,
   }),
 });
-/*
-const updateUserMutation = graphql(UPDATE_USER_MUTATION, {
+
+const updateUsername = graphql(UPDATE_USER_MUTATION, {
   props: ({ ownProps, mutate }) => ({
-    updateUser: ({ id, name }) =>
+    updateUsername: ({ id, name }) =>
       mutate({
         variables: { id, name },
         optimisticResponse: {
           __typename: 'Mutation',
-          updateUser: {
+          updateUsername: {
             __typename: 'User',
             id: ownProps.auth.id, // we know the id
             username: name, // we know what the new username will be
           },
         },
-        update: (store, { data: { updateUser } }) => {
+        update: (store, { data: { updateUsername } }) => {
           // Read the data from our cache for this query.
           const data = store.readQuery({ query: USER_QUERY, variables: { id: ownProps.auth.id } }); 
           
@@ -244,18 +267,15 @@ const updateUserMutation = graphql(UPDATE_USER_MUTATION, {
       }),
   }),
 });
-*/
+
 
 
 const mapStateToProps = ({ auth }) => ({
   auth,
 });
 
-// Nya.Bosco2@yahoo.com
-// Chadrick42@yahoo.com
-
 export default compose(
   connect(mapStateToProps),
   userQuery,
-  // updateUserMutation,
+   updateUsername,
 )(Settings);

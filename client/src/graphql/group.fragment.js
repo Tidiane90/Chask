@@ -6,11 +6,12 @@ const GROUP_FRAGMENT = gql`
   fragment GroupFragment on Group {
     id
     name
+    ownerId
     users {
       id
       username
     }
-    messages(messageConnection: $messageConnection) {
+    messages(first: $first, last: $last, before: $before, after: $after) {
       edges {
         cursor
         node {
@@ -25,5 +26,4 @@ const GROUP_FRAGMENT = gql`
   }
   ${MESSAGE_FRAGMENT}
 `;
-
 export default GROUP_FRAGMENT;

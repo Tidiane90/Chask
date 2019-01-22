@@ -171,6 +171,10 @@ AppWithNavigationState.propTypes = {
   user: PropTypes.shape({
     id: PropTypes.number.isRequired,
     email: PropTypes.string.isRequired,
+    workspace: PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired
+    }),
     groups: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.number.isRequired,
@@ -196,7 +200,7 @@ const userQuery = graphql(USER_QUERY, {
     user,
     refetch,
     subscribeToMessages() {
-      console.log(user);
+      // console.log(user);
       return subscribeToMore({
         document: MESSAGE_ADDED_SUBSCRIPTION,
         variables: {

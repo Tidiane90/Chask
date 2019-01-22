@@ -8,7 +8,7 @@ const db = new Sequelize('chask', null, null, {
   dialect: 'sqlite',
   storage: './chask.sqlite',
   logging: false, // mark this true if you want to see logs
-  operatorsAliases: false
+  // operatorsAliases: false
 });
 
 // define workspaces
@@ -75,8 +75,7 @@ db.sync({ force: true }).then(() => WorkspaceModel.create({
 }))
 
 // we create the chat bot for Chask
-const firstUser = db.sync({ force: true }).then(() => UserModel.create({
-  id: 1,
+db.sync({ force: true }).then(() => UserModel.create({
   email: "chatbot@gmail.com",
   username: "Chask.ChatBot",
   password: "chaskbot",
@@ -93,13 +92,13 @@ const firstUser = db.sync({ force: true }).then(() => UserModel.create({
 
 // fakes a bunch of groups, users, and messages
 db.sync({ force: true }).then(() => WorkspaceModel.create({
-  name: "testworkspace",
+  name: "testWorkspace",
 }).then((workspaceTest) => _.times(GROUPS, () => GroupModel.create({
   // name: faker.lorem.words(3),
   name: "General",
-  ownerId: ownerCount++
+  ownerId: 5
 }).then(group => _.times(USERS_PER_GROUP, () => {
-
+  // console.log(Object.keys(group.__proto__));
   const password = faker.lorem.words(1);
   // const password = faker.internet.password();
   
@@ -110,13 +109,14 @@ db.sync({ force: true }).then(() => WorkspaceModel.create({
     version: 1,
   }).then((user) => {
     workspaceTest.addUser(user);
+    user.setWorkspace(workspaceTest);
     // console.log("_____________________________");
     // console.log(user);
     // console.log("__________________dsd___________");
     // console.log(workspaceTest);
     console.log(
-      '{email, username, password, id}',
-      `{${user.email}, ${user.username}, ${password}, ${user.id}}`
+      '{id, email, username, password}',
+      `{${user.id}, ${user.email}, ${user.username}, ${password} }`
     );
     _.times(MESSAGES_PER_USER, () => MessageModel.create({
       userId: user.id,
@@ -124,30 +124,15 @@ db.sync({ force: true }).then(() => WorkspaceModel.create({
       text: faker.lorem.sentences(3),
     }));    
 
-    // user.addWorkspace(workspaceTest);
-
     return user;
   }));
 })).then((userPromises) => {
   
   // make users friends with all users in the group
   Promise.all(userPromises).then((users) => {
-    if(workspaceTest.hasUsers())
-        console.log("already added")
-    else {
-      workspaceTest.addUsers(users);
-    }
-    //workspaceTest.addUsers(...users);
-    // workspaceTest.addUsers(users);
-  
-    // console.log(workspaceTest.getUsers());
-    // users.addWorkspace(workspaceTest);
-    // console.log("users => ");
-    // console.log(users);
-    // console.log(workspaceTest)
     _.each(users, (current, i) => {
       // we add the workspace to the users
-      current.setWorkspace(workspaceTest);
+      // current.setWorkspace(workspaceTest);
       //console.log("current user")
       //console.log(current)
       //console.log(workspaceTest)
@@ -164,6 +149,19 @@ db.sync({ force: true }).then(() => WorkspaceModel.create({
         }
       });
     });
+    if(workspaceTest.hasUsers())
+        console.log("already added")
+    else {
+      workspaceTest.addUsers(users);
+    }
+    //workspaceTest.addUsers(...users);
+    // workspaceTest.addUsers(users);
+  
+    // console.log(workspaceTest.getUsers());
+    // users.addWorkspace(workspaceTest);
+    // console.log("users => ");
+    // console.log(users);
+    // console.log(workspaceTest)
   });
 }))));
 
