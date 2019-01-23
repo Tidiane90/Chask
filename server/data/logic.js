@@ -2,21 +2,9 @@ import { ApolloError, AuthenticationError, ForbiddenError } from 'apollo-server'
 import { Workspace, Group, Message, User } from './connectors';
 import { _ } from 'lodash';
 import Sequelize from 'sequelize';
+import { sendMessageChatbot, createGeneral } from './functions'
 
 const Op = Sequelize.Op;
-
-// function to send a message through the chask chatbot
-function sendMessageChatbot(idGroup, idUserOwner) {
-  User.findOne({
-    where: { id: idUserOwner },
-  }).then((userOwner) => {
-    Message.create({
-      userId: 1,
-      groupId: idGroup,
-      text: "Hello all, the owner of this group is " +userOwner.username +"!!!",
-    })
-  });
-}
 
 // reusable function to check for a user with context
 function getAuthenticatedUser(ctx) {

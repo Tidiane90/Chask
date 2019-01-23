@@ -16,6 +16,14 @@ import { Resolvers } from './resolvers';
 export const typeDefs = gql`
   # declare custom scalars
   scalar Date
+  
+  # input for signing in users
+  input SigninUserInput {
+    workspaceName: String!
+    email: String!
+    password: String!
+    username: String
+  }
 
   # the wrapper type that will hold the edges and pageInfo fields
   type MessageConnection {
@@ -116,8 +124,9 @@ export const typeDefs = gql`
     leaveGroup(id: Int!): Group # let user leave group
     updateGroup(id: Int!, name: String): Group
     updateUser(id: Int!, name: String!): User
-    login(workspaceName: String!, email: String!, password: String!): User
-    signup(email: String!, password: String!, username: String): User
+    login(user: SigninUserInput!): User
+    signup(user: SigninUserInput!): User
+    updateUsername(name: String!): User
   }
 
   type Subscription {

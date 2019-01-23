@@ -97,12 +97,16 @@ class Signin extends Component {
     }
   }
 
+  // workspaceName:"testworkspace", email:"Justus.Rath@gmail.com", password:"molestiae"
+  // workspaceName:"testworkspace", email:"Chadrick42@yahoo.com", password:"omnis"
+
   login() {
     const { workspaceName, email, password } = this.state;
+    console.log(this.state)
     this.setState({
       loading: true,
     });
-    this.props.login({ workspaceName, email, password })
+    this.props.login({ workspaceName:"testWorkspace", email:"Chadrick42@yahoo.com", password:"omnis" })
       .then(({ data: { login: user } }) => {
         // console.log("user =>")
         // console.log(user)
@@ -239,23 +243,23 @@ Signin.propTypes = {
 //     jwt,
 //     username
 //   }
-// }
+// } 
 
 
 const login = graphql(LOGIN_MUTATION, {
     props: ({ mutate }) => ({
-      login: ({ workspaceName, email, password }) =>
+      login: user =>
         mutate({
-          variables: { workspaceName:"testworkspace", email:"Justus.Rath@gmail.com", password:"tempora" },
+          variables: { user },
         }),
     }),
 });
 
 const signup = graphql(SIGNUP_MUTATION, {
     props: ({ mutate }) => ({
-        signup: ({ email, password }) =>
+        signup: user =>
         mutate({
-            variables: { email, password },
+            variables: { user },
         }),
     }),
 });

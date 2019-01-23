@@ -8,6 +8,7 @@ import { Workspace, Group, Message, User } from './connectors';
 import { pubsub } from '../subscriptions';
 import { JWT_SECRET } from '../config';
 import { workspaceLogic, groupLogic, messageLogic, userLogic, subscriptionLogic } from './logic';
+import { createGeneral, sendMessageChatbot } from './functions';
 
 const MESSAGE_ADDED_TOPIC = 'messageAdded';
 const GROUP_ADDED_TOPIC = 'groupAdded';
@@ -68,55 +69,72 @@ export const resolvers = {
     updateGroup(_, args, ctx) {
       return groupLogic.updateGroup(_, args, ctx);
     },
-    login(_, { workspaceName, email, password }, ctx) {
-      console.log("testtststdctsd")
-      // find user by email
-      return User.findOne({ where: { email } }).then((user) => {
-        console.log("-------------------")
-        // console.log(user)
-        // console.log("Workspace => ")
-        // console.log(name);
-        if (user) {
-          // console.log(user.getWorkspace());
-          // validate password
-          return bcrypt.compare(password, user.password).then(res => {
-            if (res) {
-              // create jwt
-              const token = jwt.sign({
-                id: user.id,
-                email: user.email,
-                version: user.version,
-              }, JWT_SECRET);
-              user.jwt = token;
-              ctx.user = Promise.resolve(user);
-              return user;
+    login(_, signinUserInput, ctx) {
+      const { workspaceName, email, password } = signinUserInput.user;
+      return Workspace.findOne({ where: { name: workspaceName }}).then((workspace) => {
+        if(workspace) {
+          console.log("____________________")
+          // find user by email
+          return User.findOne({ where: { email } }).then((user) => {
+            console.log("-------------------")
+            // console.log(user)
+            // console.log("Workspace => ")
+            // console.log(name);
+            if (user) {
+              // console.log(user.getWorkspace());
+              // validate password
+              return bcrypt.compare(password, user.password).then(res => {
+                if (res) {
+                  // create jwt
+                  const token = jwt.sign({
+                    id: user.id,
+                    email: user.email,
+                    version: user.version,
+                  }, JWT_SECRET);
+                  user.jwt = token;
+                  ctx.user = Promise.resolve(user);
+                  return user;
+                }
+              return Promise.reject('password incorrect');
+              });
             }
-           return Promise.reject('password incorrect');
+            return Promise.reject('email not found');
           });
         }
-        return Promise.reject('email not found');
+        return Promise.reject('workspace not found');
       });
+      
     },
-    signup(_, { email, password, username }, ctx) {
-      // find user by email
-      return User.findOne({ where: { email } }).then((existing) => {
-        if (!existing) {
-          // hash password and create user
-          return bcrypt.hash(password, 10).then(hash => User.create({
-            email,
-            password: hash,
-            username: username || email,
-            version: 1,
-          })).then((user) => {
-            const { id } = user;
-            const token = jwt.sign({ id, email, version: 1 }, JWT_SECRET);
-            user.jwt = token;
-            ctx.user = Promise.resolve(user);
-            return user;
+    signup(_, { signinUserInput }, ctx) {
+      const { workspaceName, email, password, username } = signinUserInput.user;
+      return Workspace.findOne({ where: { name: workspaceName }}).then((workspace) => {
+        if(!workspace) {
+          // find user by email
+          return User.findOne({ where: { email } }).then((existing) => {
+            if (!existing) {
+              // hash password and create user
+              return bcrypt.hash(password, 10).then(hash => User.create({
+                email,
+                password: hash,
+                username: username || email,
+                version: 1,
+              })).then((user) => {
+                workspace.addUser(user);
+                user.setWorkspace(workspace);
+                createGeneral(user.id);
+                sendMessageChatbot(user.id)
+                const { id } = user;
+                const token = jwt.sign({ id, email, version: 1 }, JWT_SECRET);
+                user.jwt = token;
+                ctx.user = Promise.resolve(user);
+                return user;
+              });
+            }
+            return Promise.reject('email already exists'); // email already exists
           });
         }
-        return Promise.reject('email already exists'); // email already exists
-      });
+        return Promise.reject('workspace already exits');
+      })
     },
   },
   Subscription: {
