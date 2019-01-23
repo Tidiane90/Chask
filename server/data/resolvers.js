@@ -105,30 +105,36 @@ export const resolvers = {
       });
       
     },
-    signup(_, { signinUserInput }, ctx) {
+    signup(_, signinUserInput, ctx) {
       const { workspaceName, email, password, username } = signinUserInput.user;
-      return Workspace.findOne({ where: { name: workspaceName }}).then((workspace) => {
-        if(!workspace) {
+      return Workspace.findOne({ where: { name: workspaceName }}).then((workspaceExist) => {
+        if(!workspaceExist) {
           // find user by email
           return User.findOne({ where: { email } }).then((existing) => {
             if (!existing) {
-              // hash password and create user
-              return bcrypt.hash(password, 10).then(hash => User.create({
-                email,
-                password: hash,
-                username: username || email,
-                version: 1,
-              })).then((user) => {
-                workspace.addUser(user);
-                user.setWorkspace(workspace);
-                createGeneral(user.id);
-                sendMessageChatbot(user.id)
-                const { id } = user;
-                const token = jwt.sign({ id, email, version: 1 }, JWT_SECRET);
-                user.jwt = token;
-                ctx.user = Promise.resolve(user);
-                return user;
-              });
+              // create new workspace
+              return Workspace.create({
+                name: workspaceName
+              }).then((workspace) => {
+                // hash password and create user
+                return bcrypt.hash(password, 10).then(hash => User.create({
+                  email,
+                  password: hash,
+                  username: username || email,
+                  version: 1,
+                })).then((user) => {
+                  workspace.addUser(user);
+                  user.setWorkspace(workspace);
+                  createGeneral(user.id).then((group) => {
+                    sendMessageChatbot(group.id, user.id)
+                  });
+                  const { id } = user;
+                  const token = jwt.sign({ id, email, version: 1 }, JWT_SECRET);
+                  user.jwt = token;
+                  ctx.user = Promise.resolve(user);
+                  return user;
+                });
+              })
             }
             return Promise.reject('email already exists'); // email already exists
           });

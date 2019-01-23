@@ -80,8 +80,15 @@ export const typeDefs = gql`
     createdAt: Date! # when message was created
   }
 
+  # states of a task
+  enum TaskStateEnum {
+    TO_DO
+    IN_PROGRESS
+    DONE
+  }
+
   # a story entity
-  type Story {
+  type UserStory {
     id: Int! # unique id for the story
     name: String # name of the story
     users: [User]! # users in the story
@@ -91,17 +98,15 @@ export const typeDefs = gql`
   # a task entity
   type Task {
     id: Int! # unique id for the task
-    name: String # name of the task
-    belongsTo: Story! # group message was sent in
-    users: [User]! # users in the task
+    title: String # title of the task
+    belongsTo: UserStory! # the User Story the task belongs to
+    state: TaskStateEnum!
+    sharedUsers: [User]! # users that are sharing the task
     ownerId: Int! # user id of the owner of the task
   }
 
   # query for types
   type Query {
-    # Return a workspace by their id
-    workspace(id: Int): Workspace
-
     # Return a user by their email or id
     user(email: String, id: Int): User
 
@@ -109,11 +114,18 @@ export const typeDefs = gql`
     # Return messages sent to a group via groupId
     messages(groupId: Int, userId: Int): [Message]
     
+    # Return a User Story by its id
+    userStory(id: Int!): UserStory
+
+    # Return a task by its id
+    task(id: Int!): Task
+
     # Return a group by its id
     group(id: Int!): Group
   }
 
   type Mutation {
+    # createTask
     # send a message to a group
     # text is the message text
     # userId is the id of the user sending the message

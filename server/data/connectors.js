@@ -2,6 +2,7 @@ import { _ } from 'lodash';
 import faker from 'faker';
 import Sequelize from 'sequelize';
 import bcrypt from 'bcryptjs';
+import { createGeneral, sendMessageChatbot } from './functions';
 
 // initialize our database
 const db = new Sequelize('chask', null, null, {
@@ -15,6 +16,23 @@ const db = new Sequelize('chask', null, null, {
 const WorkspaceModel = db.define('workspace', {
   name: { type: Sequelize.STRING },
 });
+
+// define groups
+const UserStoryModel = db.define('userstory', {
+  name: { type: Sequelize.STRING },
+  ownerId: { type: Sequelize.INTEGER },
+});
+
+// define tasks
+const TaskModel = db.define('task', {
+  title: { type: Sequelize.STRING },
+  state: { 
+    type:   Sequelize.ENUM,
+    values: ['TO DO', 'IN PROGRESS', 'DONE'],
+    defaultValue: 'TO DO'
+  }
+});
+
 
 // define groups
 const GroupModel = db.define('group', {
@@ -42,6 +60,9 @@ UserModel.belongsTo(WorkspaceModel, { through: 'WorkspaceUser' });
 // users belong to multiple groups
 UserModel.belongsToMany(GroupModel, { through: 'GroupUser' });
 
+// users belong to multiple user stories
+UserModel.belongsToMany(UserStoryModel, { through: 'UserstoryUser' });
+
 // users belong to multiple users as friends
 UserModel.belongsToMany(UserModel, { through: 'Friends', as: 'friends' });
 
@@ -51,8 +72,17 @@ MessageModel.belongsTo(UserModel);
 // messages are sent to groups
 MessageModel.belongsTo(GroupModel);
 
+// tasks are created from users
+TaskModel.belongsTo(UserModel);
+
+// tasks belong to user stories
+TaskModel.belongsTo(UserStoryModel);
+
 // workspaces have multiple users
 WorkspaceModel.belongsToMany(UserModel, { through: 'WorkspaceUser' });
+
+// user stories have multiple users
+UserStoryModel.belongsToMany(UserModel, { through: 'UserstoryUser' });
 
 // groups have multiple users
 GroupModel.belongsToMany(UserModel, { through: 'GroupUser' });
@@ -65,14 +95,26 @@ faker.seed(123); // get consistent data every time we reload app
 
 const mySalt = 10;
 let first = true;
-let ownerCount = 2;
 
-// fakes a bunch of groups, users, and messages
-db.sync({ force: true }).then(() => WorkspaceModel.create({
-  name: "testworkspace2",
-}).then((workspaceTest) => {
-  //console.log(Object.keys(workspaceTest.__proto__));
-}))
+db.sync({ force: true }).then(() => {
+  UserStoryModel.create({
+    name: "testUserStory",
+    ownerId: 5
+  }).then((us) => {
+    TaskModel.create({
+      title: "testTask"
+    }).then((task) => {
+      console.log(
+        '{User story}',
+        `{${us.id}, ${us.name}}`
+      );
+      console.log(
+        '{Task}',
+        `{${task.id}, ${task.title}, ${task.state}}`
+      );
+    })
+  })
+})
 
 // we create the chat bot for Chask
 db.sync({ force: true }).then(() => UserModel.create({
@@ -165,9 +207,12 @@ db.sync({ force: true }).then(() => WorkspaceModel.create({
   });
 }))));
 
+
+
 const Workspace = db.models.workspace;
+const UserStory = db.models.userstory;
 const Group = db.models.group;
 const Message = db.models.message;
 const User = db.models.user;
 
-export { Workspace, Group, Message, User };
+export { Workspace, UserStory, Group, Message, User };

@@ -18,19 +18,13 @@ export function sendMessageChatbot(idGroup, idUserOwner) {
 
 // function to cretae a general group when a workspace is created with a new user
 export function createGeneral(idUserOwner) {
-    User.findOne({
+    return User.findOne({
         where: { id: idUserOwner },
     }).then((userOwner) => {
-        Group.create({
+        return Group.create({
             // name: faker.lorem.words(3),
             name: "General",
             ownerId: userOwner.id
-        }).then((group) => {
-            Message.create({
-                userId: 1,
-                groupId: group.id,
-                text: "Hello all, the owner of this group is " +userOwner.username +"!!!",
-            });
-        });
+        })
     });
 }

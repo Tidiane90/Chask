@@ -236,8 +236,9 @@ Signin.propTypes = {
 
 // mutation {
 //   login(
+//     workspaceName:"testWorkspace",
 //     email:"Chadrick42@yahoo.com",
-//   password: "eligendi")
+//     password: "eligendi")
 //   {
 //     id, 
 //     jwt,
