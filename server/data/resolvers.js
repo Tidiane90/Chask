@@ -4,10 +4,13 @@ import { map } from 'lodash';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-import { Workspace, Group, Message, User } from './connectors';
+import { Workspace, Userstory, Task, Group, Message, User } from './connectors';
 import { pubsub } from '../subscriptions';
 import { JWT_SECRET } from '../config';
-import { workspaceLogic, groupLogic, messageLogic, userLogic, subscriptionLogic } from './logic';
+import { 
+  workspaceLogic, userstoryLogic, taskLogic, 
+  groupLogic, messageLogic, userLogic, 
+  subscriptionLogic } from './logic';
 import { createGeneral, sendMessageChatbot } from './functions';
 
 const MESSAGE_ADDED_TOPIC = 'messageAdded';
@@ -38,13 +41,16 @@ export const resolvers = {
     user(_, args, ctx) {
       return userLogic.query(_, args, ctx);
     },
-    // workspace(_, args, ctx) {
-    //   return workspaceLogic.query(_, args, ctx);
-    // },
+    userstory(_, args, ctx) {
+      return userstoryLogic.query(_, args, ctx);
+    },
+    tasks(_, args, ctx) {
+      return taskLogic.query(_, args, ctx);
+    },
   },
   Mutation: {
-    updateUser(_, { id, newName}, ctx) {
-      return userLogic.updateUser(_, args, ctx);
+    updateUsername(_, args, ctx) {
+      return userLogic.updateUsername(_, args, ctx);
     },
     createMessage(_, args, ctx) {
       return messageLogic.createMessage(_, args, ctx)
@@ -73,15 +79,10 @@ export const resolvers = {
       const { workspaceName, email, password } = signinUserInput.user;
       return Workspace.findOne({ where: { name: workspaceName }}).then((workspace) => {
         if(workspace) {
-          console.log("____________________")
           // find user by email
           return User.findOne({ where: { email } }).then((user) => {
             console.log("-------------------")
-            // console.log(user)
-            // console.log("Workspace => ")
-            // console.log(name);
             if (user) {
-              // console.log(user.getWorkspace());
               // validate password
               return bcrypt.compare(password, user.password).then(res => {
                 if (res) {
@@ -132,7 +133,7 @@ export const resolvers = {
                   const token = jwt.sign({ id, email, version: 1 }, JWT_SECRET);
                   user.jwt = token;
                   ctx.user = Promise.resolve(user);
-                  return user;
+                    return user;                  
                 });
               })
             }
@@ -179,11 +180,6 @@ export const resolvers = {
       ),
     },
   },
-  // Workspace: {
-  //   users(workspace, args, ctx) {
-  //     return workspaceLogic.users(workspace, args, ctx);
-  //   },
-  // },
   Group: {
     users(group, args, ctx) {
       return groupLogic.users(group, args, ctx);
@@ -194,6 +190,31 @@ export const resolvers = {
     // ownerId(group, args, ctx) {
     //   return groupLogic.ownerId(group, args, ctx);
     // },
+  },
+  Userstory: {
+    name(userstory, args, ctx) {
+      return userstoryLogic.name(userstory, args, ctx);
+    },
+    users(userstory, args, ctx) {
+      return userstoryLogic.users(userstory, args, ctx);
+    },
+    tasks(group, args, ctx) {
+      return userstoryLogic.tasks(group, args, ctx);
+    },
+  },
+  Task: {
+    title(task, args, ctx) {
+      return taskLogic.title(task, args, ctx);
+    },
+    belongsTo(task, args, ctx) {
+      return taskLogic.belongsTo(task, args, ctx);
+    },
+    from(task, args, ctx) {
+      return taskLogic.from(task, args, ctx);
+    },
+    state(task, args, ctx) {
+      return taskLogic.state(task, args, ctx);
+    },
   },
   Message: {
     to(message, args, ctx) {

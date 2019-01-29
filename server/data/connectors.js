@@ -18,7 +18,7 @@ const WorkspaceModel = db.define('workspace', {
 });
 
 // define groups
-const UserStoryModel = db.define('userstory', {
+const UserstoryModel = db.define('userstory', {
   name: { type: Sequelize.STRING },
   ownerId: { type: Sequelize.INTEGER },
 });
@@ -28,8 +28,8 @@ const TaskModel = db.define('task', {
   title: { type: Sequelize.STRING },
   state: { 
     type:   Sequelize.ENUM,
-    values: ['TO DO', 'IN PROGRESS', 'DONE'],
-    defaultValue: 'TO DO'
+    values: ['TO_DO', 'IN_PROGRESS', 'DONE'],
+    defaultValue: 'TO_DO'
   }
 });
 
@@ -61,7 +61,7 @@ UserModel.belongsTo(WorkspaceModel, { through: 'WorkspaceUser' });
 UserModel.belongsToMany(GroupModel, { through: 'GroupUser' });
 
 // users belong to multiple user stories
-UserModel.belongsToMany(UserStoryModel, { through: 'UserstoryUser' });
+UserModel.belongsToMany(UserstoryModel, { through: 'UserstoryUser' });
 
 // users belong to multiple users as friends
 UserModel.belongsToMany(UserModel, { through: 'Friends', as: 'friends' });
@@ -72,17 +72,20 @@ MessageModel.belongsTo(UserModel);
 // messages are sent to groups
 MessageModel.belongsTo(GroupModel);
 
+// user stories belong to multiple tasks
+UserstoryModel.belongsToMany(TaskModel, { through: 'UserstoryTask' });
+
 // tasks are created from users
-TaskModel.belongsTo(UserModel);
+TaskModel.belongsToMany(UserModel, { through: 'TaskUser' });
 
 // tasks belong to user stories
-TaskModel.belongsTo(UserStoryModel);
+TaskModel.belongsTo(UserstoryModel);
 
 // workspaces have multiple users
 WorkspaceModel.belongsToMany(UserModel, { through: 'WorkspaceUser' });
 
 // user stories have multiple users
-UserStoryModel.belongsToMany(UserModel, { through: 'UserstoryUser' });
+UserstoryModel.belongsToMany(UserModel, { through: 'UserstoryUser' });
 
 // groups have multiple users
 GroupModel.belongsToMany(UserModel, { through: 'GroupUser' });
@@ -94,26 +97,9 @@ const MESSAGES_PER_USER = 5;
 faker.seed(123); // get consistent data every time we reload app
 
 const mySalt = 10;
-let first = true;
 
 db.sync({ force: true }).then(() => {
-  UserStoryModel.create({
-    name: "testUserStory",
-    ownerId: 5
-  }).then((us) => {
-    TaskModel.create({
-      title: "testTask"
-    }).then((task) => {
-      console.log(
-        '{User story}',
-        `{${us.id}, ${us.name}}`
-      );
-      console.log(
-        '{Task}',
-        `{${task.id}, ${task.title}, ${task.state}}`
-      );
-    })
-  })
+  
 })
 
 // we create the chat bot for Chask
@@ -137,57 +123,63 @@ db.sync({ force: true }).then(() => WorkspaceModel.create({
   name: "testWorkspace",
 }).then((workspaceTest) => _.times(GROUPS, () => GroupModel.create({
   // name: faker.lorem.words(3),
-  name: "General",
+  name: "General Group",
   ownerId: 5
-}).then(group => _.times(USERS_PER_GROUP, () => {
-  // console.log(Object.keys(group.__proto__));
-  const password = faker.lorem.words(1);
-  // const password = faker.internet.password();
-  
-  return bcrypt.hash(password, mySalt).then(hash => group.createUser({
-    email: faker.internet.email(),
-    username: faker.internet.userName(),
-    password: hash,
-    version: 1,
-  }).then((user) => {
-    workspaceTest.addUser(user);
-    user.setWorkspace(workspaceTest);
-    // console.log("_____________________________");
-    // console.log(user);
-    // console.log("__________________dsd___________");
-    // console.log(workspaceTest);
-    console.log(
-      '{id, email, username, password}',
-      `{${user.id}, ${user.email}, ${user.username}, ${password} }`
-    );
-    _.times(MESSAGES_PER_USER, () => MessageModel.create({
-      userId: user.id,
-      groupId: group.id,
-      text: faker.lorem.sentences(3),
-    }));    
+}).then(group => {
+  // create a user story
+  return UserstoryModel.create({
+    name: "General User Story",
+    ownerId: 5
+  }).then(us => 
+    _.times(USERS_PER_GROUP, () => {
+    // console.log(Object.keys(group.__proto__));
+    const password = faker.lorem.words(1);
+    // const password = faker.internet.password();
+    // console.log(Object.keys(us.__proto__));
+    return bcrypt.hash(password, mySalt).then(hash => group.createUser({
+      email: faker.internet.email(),
+      username: faker.internet.userName(),
+      password: hash,
+      version: 1,
+    }).then((user) => {
+      //create tasks
+      TaskModel.create({
+        userstoryId: us.id,
+        title: faker.lorem.words(2),
+        ownerId: 5
+      }).then((task) => {
+        // us.addTask(task);
+        // task.setUserstory(us);
+        // console.log(Object.keys(task.__proto__));
+        console.log(
+          '{Task id, title, state, userstoryId}',
+          `{${task.id}, ${task.title}, ${task.state}, ${task.userstoryId}}`
+        );
+      });
+      us.addUser(user);
+      workspaceTest.addUser(user);
+      user.setWorkspace(workspaceTest);
+      console.log(
+        '{id, email, username, password}',
+        `{${user.id}, ${user.email}, ${user.username}, ${password} }`
+      );
+      _.times(MESSAGES_PER_USER, () => MessageModel.create({
+        userId: user.id,
+        groupId: group.id,
+        text: faker.lorem.sentences(3),
+      }));    
 
-    return user;
-  }));
-})).then((userPromises) => {
+      return user;
+    }));
+  }))
+}).then((userPromises) => {
   
   // make users friends with all users in the group
   Promise.all(userPromises).then((users) => {
     _.each(users, (current, i) => {
-      // we add the workspace to the users
-      // current.setWorkspace(workspaceTest);
-      //console.log("current user")
-      //console.log(current)
-      //console.log(workspaceTest)
-      // console.log(current.email + " " +current.workspaceId);
-      // console.log(Object.keys(workspaceTest.__proto__));
-      // console.log(Object.keys(current.__proto__));
-      
-        //workspaceTest.addUser(current)
-      // console.log(current.getWorkspace());
       _.each(users, (user, j) => {
         if (i !== j) {
           current.addFriend(user);
-          // console.log(current.getFriends());
         }
       });
     });
@@ -196,23 +188,16 @@ db.sync({ force: true }).then(() => WorkspaceModel.create({
     else {
       workspaceTest.addUsers(users);
     }
-    //workspaceTest.addUsers(...users);
-    // workspaceTest.addUsers(users);
-  
-    // console.log(workspaceTest.getUsers());
-    // users.addWorkspace(workspaceTest);
-    // console.log("users => ");
-    // console.log(users);
-    // console.log(workspaceTest)
   });
 }))));
 
 
 
 const Workspace = db.models.workspace;
-const UserStory = db.models.userstory;
+const Userstory = db.models.userstory;
+const Task = db.models.task;
 const Group = db.models.group;
 const Message = db.models.message;
 const User = db.models.user;
 
-export { Workspace, UserStory, Group, Message, User };
+export { Workspace, Userstory, Task, Group, Message, User };

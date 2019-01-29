@@ -1,5 +1,5 @@
 import { ApolloError, AuthenticationError, ForbiddenError } from 'apollo-server';
-import { Workspace, Group, Message, User } from './connectors';
+import { Workspace, Group, Message, User, Userstory, Task } from './connectors';
 import { _ } from 'lodash';
 import Sequelize from 'sequelize';
 import { sendMessageChatbot, createGeneral } from './functions'
@@ -53,15 +53,87 @@ export const messageLogic = {
     },
 };
 
+export const userstoryLogic = {
+  name(userstory, args, ctx) {
+    // return getAuthenticatedUser(ctx).then((currentUser) => {
+    //   if (currentUser.id === user.id) {
+    //     return userstory.name;
+    //   }
+    //   throw new ForbiddenError('Unauthorized');
+    // });
+    // return Userstory.findOne({
+    //   where: { id }
+    // })
+    return userstory.name
+  },
+  users(userstory, args, ctx) {
+    return userstory.getUsers({ attributes: ['id', 'username'] });
+  },
+  tasks(userstory, args, ctx) {
+    return userstory.getTasks();
+  }, 
+  query(_, { id }, ctx) {
+    return getAuthenticatedUser(ctx).then(user => Userstory.findOne({
+      where: { id },
+      include: [{
+        model: User,
+        where: { id: user.id },
+      }],
+    }));
+  },
+}
+
+export const taskLogic = {
+  title(task, args, ctx) {
+    // return getAuthenticatedUser(ctx).then((currentUser) => {
+    //   if (currentUser.id === user.id) {
+    //     return task.title;
+    //   }
+    //   throw new ForbiddenError('Unauthorized');
+    // });
+    return task.title;
+  },
+  belongsTo(task, args, ctx) {
+    // return getAuthenticatedUser(ctx).then((currentUser) => {
+    //   if (currentUser.id === user.id) {
+    //     return task.getUserstory();
+    //   }
+    //   throw new ForbiddenError('Unauthorized');
+    // });
+    return task.getUserstory();
+  },
+  from(task, args, ctx) {
+    // return getAuthenticatedUser(ctx).then((currentUser) => {
+    //   if (currentUser.id === user.id) {
+    //     return task.getUser();
+    //   }
+    //   throw new ForbiddenError('Unauthorized');
+    // });
+  },
+  state(task, args, ctx) {
+    // return getAuthenticatedUser(ctx).then((currentUser) => {
+    //   if (currentUser.id === user.id) {
+    //     return task.title;
+    //   }
+    //   throw new ForbiddenError('Unauthorized');
+    // });
+    return task.state;
+  },
+  query(_, { userstoryId, userId }, ctx) {
+    return Task.findAll({
+      where: { userstoryId }
+    })
+    // return getAuthenticatedUser(ctx).then(user => Task.findOne({
+    //   where: { id },
+    //   include: [{
+    //     model: User,
+    //     where: { id: user.id },
+    //   }],
+    // }));
+  },
+}
+
 export const groupLogic = {
-  // ownerId(_, { group }, ctx) {
-  //   return getAuthenticatedUser(ctx).then((currentUser) => {
-  //     if (currentUser.id === user.id) {
-  //       return group.ownerId;
-  //     }
-  //     throw new ForbiddenError('Unauthorized');
-  //   });
-  // }
   users(group) {
     return group.getUsers({ attributes: ['id', 'username'] });
   },
@@ -195,10 +267,12 @@ export const groupLogic = {
 };
 
 export const userLogic = {
-  updateUser(_, { id, username }, ctx) {
+  updateUsername(_, { username }, ctx) {
     return getAuthenticatedUser(ctx).then((user) => {
-      return User.findOne({ where: { id } })
-        .then(user => user.update({ username }))
+      return user.update({ username }).then(newUser => {
+        ctx.user = Promise.resolve(newUser)
+        return newUser;
+      });
     });
   },
   email(user, args, ctx) {

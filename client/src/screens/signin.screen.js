@@ -106,11 +106,8 @@ class Signin extends Component {
     this.setState({
       loading: true,
     });
-    this.props.login({ workspaceName:"testWorkspace", email:"Chadrick42@yahoo.com", password:"omnis" })
+    this.props.login({ workspaceName:"testWorkspace", email:"Chadrick42@yahoo.com", password:"eligendi" })
       .then(({ data: { login: user } }) => {
-        // console.log("user =>")
-        // console.log(user)
-
         this.props.dispatch(setCurrentUser(user));
         this.setState({
           loading: false,
@@ -137,7 +134,7 @@ class Signin extends Component {
 
     const { workspaceName, email, password } = this.state;
 
-    this.props.signup({ email, password })
+    this.props.signup({ workspaceName, email, password })
     .then(({ data: { signup: user } }) => {
         this.props.dispatch(setCurrentUser(user));
         this.setState({
@@ -235,16 +232,19 @@ Signin.propTypes = {
 // Chadrick42@yahoo.com
 
 // mutation {
-//   login(
-//     workspaceName:"testWorkspace",
-//     email:"Chadrick42@yahoo.com",
-//     password: "eligendi")
+//   login(user: { workspaceName:"testWorkspace", 
+//     						email:"Chadrick42@yahoo.com", 
+//     						password: "omnis"})
 //   {
 //     id, 
 //     jwt,
 //     username
 //   }
 // } 
+
+// {
+//   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZW1haWwiOiJDaGFkcmljazQyQHlhaG9vLmNvbSIsInZlcnNpb24iOjEsImlhdCI6MTU0ODc2NzI4Nn0.iIl3X24x-tlGzQEWBUc2Zl49IguCDNGlDDFq5M-zb7M"
+// }
 
 
 const login = graphql(LOGIN_MUTATION, {

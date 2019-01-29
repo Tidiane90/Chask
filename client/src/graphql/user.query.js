@@ -2,6 +2,9 @@ import gql from 'graphql-tag';
 
 import MESSAGE_FRAGMENT from './message.fragment';
 
+import USER_FRAGMENT from './user.fragment';
+
+
 // get the user and all user's groups
 export const USER_QUERY = gql`
   query user($id: Int) {

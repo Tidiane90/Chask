@@ -88,21 +88,22 @@ export const typeDefs = gql`
   }
 
   # a story entity
-  type UserStory {
+  type Userstory {
     id: Int! # unique id for the story
     name: String # name of the story
     users: [User]! # users in the story
     ownerId: Int! # user id of the owner of the user story group
+    tasks(id: Int, userstoryId: Int): [Task]
   }
 
   # a task entity
   type Task {
     id: Int! # unique id for the task
     title: String # title of the task
-    belongsTo: UserStory! # the User Story the task belongs to
+    belongsTo: Userstory! # the User Story the task belongs to
+    from: User # user who works on the task
+    ownerId: Int # user id of the owner of the task
     state: TaskStateEnum!
-    sharedUsers: [User]! # users that are sharing the task
-    ownerId: Int! # user id of the owner of the task
   }
 
   # query for types
@@ -113,15 +114,16 @@ export const typeDefs = gql`
     # Return messages sent by a user via userId
     # Return messages sent to a group via groupId
     messages(groupId: Int, userId: Int): [Message]
-    
-    # Return a User Story by its id
-    userStory(id: Int!): UserStory
-
-    # Return a task by its id
-    task(id: Int!): Task
 
     # Return a group by its id
     group(id: Int!): Group
+    
+    # Return a User Story by its id
+    userstory(id: Int!): Userstory
+
+    # Return a task by its userstoryid
+    # Return tasks via userId
+    tasks(userstoryId: Int): [Task]
   }
 
   type Mutation {
@@ -138,7 +140,7 @@ export const typeDefs = gql`
     updateUser(id: Int!, name: String!): User
     login(user: SigninUserInput!): User
     signup(user: SigninUserInput!): User
-    updateUsername(name: String!): User
+    updateUsername(username: String!): User
   }
 
   type Subscription {

@@ -1,4 +1,4 @@
-import { Workspace, Group, Message, User } from './connectors';
+import { Workspace, Task, Userstory, Group, Message, User } from './connectors';
 
 
 
@@ -17,13 +17,25 @@ export function sendMessageChatbot(idGroup, idUserOwner) {
 
 
 // function to cretae a general group when a workspace is created with a new user
-export function createGeneral(idUserOwner) {
+export function createGeneralGroup(idUserOwner) {
     return User.findOne({
         where: { id: idUserOwner },
     }).then((userOwner) => {
         return Group.create({
             // name: faker.lorem.words(3),
-            name: "General",
+            name: "General Group",
+            ownerId: userOwner.id
+        })
+    });
+}
+
+export function createGeneralUserstory(idUserOwner) {
+    return User.findOne({
+        where: { id: idUserOwner },
+    }).then((userOwner) => {
+        return Userstory.create({
+            // name: faker.lorem.words(3),
+            name: "General User Story",
             ownerId: userOwner.id
         })
     });

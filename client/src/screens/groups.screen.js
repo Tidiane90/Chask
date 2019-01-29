@@ -197,7 +197,6 @@ class Groups extends Component {
 
   onRefresh() {
     this.props.refetch();
-    // faking unauthorized status
   }
 
   keyExtractor = item => item.id.toString();
@@ -273,8 +272,8 @@ Groups.propTypes = {
 const userQuery = graphql(USER_QUERY, {
   skip: ownProps => !ownProps.auth || !ownProps.auth.jwt,
   options: ownProps => ({ variables: { id: ownProps.auth.id } }),
-  props: ({ data: { loading, user, networkStatus, refetch, error } }) => ({
-    networkStatus, refetch, loading, user,
+  props: ({ data: { loading, networkStatus, refetch, user, error } }) => ({
+    loading, networkStatus, refetch, user,
     //   if(error) {
     //       console.log("GQL Err groups.screen => :", error);
     //   }

@@ -101,49 +101,41 @@ class Settings extends Component {
   }
 
   // eslint-disable-next-line
-  updateUsername(username) {
-
-    console.log("username => ",this.state.username );
-    console.log("id => ", this.props.auth.id);
-
-    // Alert.alert(
-    //   `Update username confirmation Screen:`,
-    //   "Are you sure you want to change your name?",
-    //   [
-    //     { text: 'Yes', onPress: () => 
-    //       this.props.deleteGroup(this.props.navigation.state.params.id)
-    //       .then(() => {
-    //         this.props.navigation.dispatch(resetAction);
-    //       })
-    //       .catch((e) => {
-    //         console.log(e); // eslint-disable-line no-console
-    //       })
-    //     }, // eslint-disable-line no-console
-    //     { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' }, // eslint-disable-line no-console
-    //   ],
-    // );
-
-    this.props.updateUsername({
-      id: this.props.auth.id,
-      name: this.state.username,
-    })
-    .then(() => {
-      console.log("new props username => ");
-      console.log(this.props.user.username);
-
-      console.log("props.user => ")
-      console.log(this.props.user)
-
-      // this.props.dispatch(setCurrentUser(this.props.user));
-      //   this.setState({
-      //     loading: false,
-      //   });
-    })
-    .catch((e) => {
-        console.log("error => ");
-        console.log(e);
-      })
+  updateUsername() {
+    const { username } = this.state;
+    console.log(username)
+    console.log(this.props.user.username)
+    if(username === this.props.user.username) {
+      Alert.alert(
+        `Update username error Screen`,
+        "No changes found in the username input! Please type a different name",
+        [
+          { text: 'Ok', onPress: () => console.log("Ok pressed") }
+        ]
+      );
+    }
+    else {
+      Alert.alert(
+        `Update username confirmation Screen:`,
+        "Are you sure you want to change your username?",
+        [
+          { text: 'Yes', onPress: () => {
+            this.props.updateUsername({username})
+            .then((newUsername) => {
+              this.props.dispatch(setCurrentUser(newUsername));
+            })
+            .catch((e) => {
+              console.log(e); // eslint-disable-line no-console
+            })
+          }
+            
+          }, // eslint-disable-line no-console
+          { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' }, // eslint-disable-line no-console
+        ],
+      );
+    }
   }
+  
   render() {
     const { loading, user } = this.props;
     // console.log("user in settings")
@@ -197,7 +189,7 @@ class Settings extends Component {
         <Text style={styles.email}>{user.workspace.name}</Text>
         
         <View style={styles.buttonSettings}>
-          <Button title="Save changes" onPress={this.updateUsername} />
+          <Button title="Update username" onPress={this.updateUsername} />
           <Text></Text>
           <Button title="Invite new user" onPress={this.updateUsername} />
           <Text></Text>
@@ -235,33 +227,42 @@ const userQuery = graphql(USER_QUERY, {
 
 const updateUsername = graphql(UPDATE_USER_MUTATION, {
   props: ({ ownProps, mutate }) => ({
-    updateUsername: ({ id, name }) =>
+    updateUsername: ({ username }) =>
       mutate({
-        variables: { id, name },
+        variables: { username },
         optimisticResponse: {
           __typename: 'Mutation',
           updateUsername: {
             __typename: 'User',
-            id: ownProps.auth.id, // we know the id
-            username: name, // we know what the new username will be
+            id: ownProps.auth.id,
+            username: username, // we know what the new username will be
+            email: ownProps.user.email,
+            workspace: ownProps.user.workspace,
+            groups: ownProps.user.groups,
+            friends: ownProps.user.friends,
           },
         },
         update: (store, { data: { updateUsername } }) => {
           // Read the data from our cache for this query.
-          const data = store.readQuery({ query: USER_QUERY, variables: { id: ownProps.auth.id } }); 
-          
-          console.log("new name => ", name)
-          console.log("data => ", data)
-          // Add our new username from the mutation to the user.
+          const userData = store.readQuery({ 
+            query: USER_QUERY, 
+            variables: { 
+              id: ownProps.auth.id 
+            } 
+          }); 
+          // console.log(ownProps)
 
-          if(data.user.username !== name )
-            data.user.username = name;
+          // Add our new username from the mutation to the user.
+          if(userData.user.username !== updateUsername.username ) {
+            userData.user.username = updateUsername.username;
+            ownProps.auth.username = updateUsername.username;
+          }            
 
           // Write our data back to the cache.
           store.writeQuery({
             query: USER_QUERY,
             variables: { id: ownProps.auth.id }, 
-            data,
+            data: userData,
           });
         },
       }),
@@ -277,5 +278,5 @@ const mapStateToProps = ({ auth }) => ({
 export default compose(
   connect(mapStateToProps),
   userQuery,
-   updateUsername,
+  updateUsername,
 )(Settings);
