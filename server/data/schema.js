@@ -119,7 +119,7 @@ export const typeDefs = gql`
     group(id: Int!): Group
     
     # Return a User Story by its id
-    userstory(id: Int!): Userstory
+    userstory(userstoryId: Int!): Userstory
 
     # Return a task by its userstoryid
     # Return tasks via userId

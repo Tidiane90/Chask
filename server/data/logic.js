@@ -72,9 +72,9 @@ export const userstoryLogic = {
   tasks(userstory, args, ctx) {
     return userstory.getTasks();
   }, 
-  query(_, { id }, ctx) {
+  query(_, { userstoryId }, ctx) {
     return getAuthenticatedUser(ctx).then(user => Userstory.findOne({
-      where: { id },
+      where: { userstoryId },
       include: [{
         model: User,
         where: { id: user.id },
