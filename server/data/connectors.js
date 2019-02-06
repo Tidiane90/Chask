@@ -1,3 +1,6 @@
+"use strict";
+
+
 import { _ } from 'lodash';
 import faker from 'faker';
 import Sequelize from 'sequelize';
@@ -33,7 +36,6 @@ const TaskModel = db.define('task', {
   }
 });
 
-
 // define groups
 const GroupModel = db.define('group', {
   name: { type: Sequelize.STRING },
@@ -47,13 +49,23 @@ const MessageModel = db.define('message', {
 
 // define users
 const UserModel = db.define('user', {
-  //workSpaceId: { type: Sequelize.INTEGER },
   email: { type: Sequelize.STRING },
   username: { type: Sequelize.STRING },
   password: { type: Sequelize.STRING },
   version: { type: Sequelize.INTEGER }, // version of the password
 });
 
+UserModel.destroy({
+  where: {},
+  truncate: true
+})
+TaskModel.destroy({
+  where: {},
+  truncate: true
+})
+UserModel.destroy({ where: {}, truncate: true, force: true })
+
+TaskModel.destroy({ where: {}, truncate: true, force: true })
 // users have one workspace
 UserModel.belongsTo(WorkspaceModel, { through: 'WorkspaceUser' });
 
@@ -72,14 +84,15 @@ MessageModel.belongsTo(UserModel);
 // messages are sent to groups
 MessageModel.belongsTo(GroupModel);
 
-// user stories belong to multiple tasks
-UserstoryModel.belongsToMany(TaskModel, { through: 'UserstoryTask' });
-
 // tasks are created from users
 TaskModel.belongsToMany(UserModel, { through: 'TaskUser' });
+TaskModel.belongsTo(UserModel);
 
 // tasks belong to user stories
 TaskModel.belongsTo(UserstoryModel);
+
+// user stories belong to multiple tasks
+UserstoryModel.belongsToMany(TaskModel, { through: 'UserstoryTask' });
 
 // workspaces have multiple users
 WorkspaceModel.belongsToMany(UserModel, { through: 'WorkspaceUser' });
@@ -97,10 +110,6 @@ const MESSAGES_PER_USER = 5;
 faker.seed(123); // get consistent data every time we reload app
 
 const mySalt = 10;
-
-db.sync({ force: true }).then(() => {
-  
-})
 
 // we create the chat bot for Chask
 db.sync({ force: true }).then(() => UserModel.create({
@@ -142,38 +151,43 @@ db.sync({ force: true }).then(() => WorkspaceModel.create({
       password: hash,
       version: 1,
     }).then((user) => {
-      //create tasks
+      console.log(
+        '{id, email, username, password}',
+        `{${user.id}, ${user.email}, ${user.username}, ${password} }`
+      );
+      // create messages for each user
+      _.times(MESSAGES_PER_USER, () => MessageModel.create({
+        userId: user.id,
+        groupId: group.id,
+        text: faker.lorem.sentences(3),
+      }));   
+      //create tasks 
       TaskModel.create({
         userstoryId: us.id,
+        userId: user.id,
         title: faker.lorem.words(2),
         ownerId: 5
       }).then((task) => {
-        // us.addTask(task);
-        // task.setUserstory(us);
+        us.addTask(task);
+        task.setUserstory(us);
         // console.log(Object.keys(task.__proto__));
         console.log(
           '{Task id, title, state, userstoryId}',
           `{${task.id}, ${task.title}, ${task.state}, ${task.userstoryId}}`
         );
       });
+      if(user.hasUserstory())
+        console.log("already added us")
+      else 
+        user.addUserstory(us);
       us.addUser(user);
       workspaceTest.addUser(user);
-      user.setWorkspace(workspaceTest);
-      console.log(
-        '{id, email, username, password}',
-        `{${user.id}, ${user.email}, ${user.username}, ${password} }`
-      );
-      _.times(MESSAGES_PER_USER, () => MessageModel.create({
-        userId: user.id,
-        groupId: group.id,
-        text: faker.lorem.sentences(3),
-      }));    
+      user.setWorkspace(workspaceTest); 
 
       return user;
     }));
   }))
 }).then((userPromises) => {
-  
   // make users friends with all users in the group
   Promise.all(userPromises).then((users) => {
     _.each(users, (current, i) => {
@@ -184,7 +198,7 @@ db.sync({ force: true }).then(() => WorkspaceModel.create({
       });
     });
     if(workspaceTest.hasUsers())
-        console.log("already added")
+        console.log("already added workspace")
     else {
       workspaceTest.addUsers(users);
     }

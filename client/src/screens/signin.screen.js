@@ -88,7 +88,10 @@ class Signin extends Component {
 
     this.login = this.login.bind(this);
     this.signup = this.signup.bind(this);
-    this.switchView = this.switchView.bind(this);
+    this.switchView = this.switchView.bind(this); 
+    this.goToForgotPassword = this.goToForgotPassword.bind(this);
+    this.goToForgotWorkspace = this.goToForgotWorkspace.bind(this);
+
   }
 
   componentWillReceiveProps(nextProps) {
@@ -106,7 +109,7 @@ class Signin extends Component {
     this.setState({
       loading: true,
     });
-    this.props.login({ workspaceName:"testWorkspace", email:"Chadrick42@yahoo.com", password:"eligendi" })
+    this.props.login({ workspaceName:"testWorkspace", email:"Chadrick42@yahoo.com", password:"omnis" })
       .then(({ data: { login: user } }) => {
         this.props.dispatch(setCurrentUser(user));
         this.setState({
@@ -121,7 +124,7 @@ class Signin extends Component {
           error.message,
           [
             { text: 'OK', onPress: () => console.log('OK pressed') }, // eslint-disable-line no-console
-            { text: 'Forgot password', onPress: () => console.log('Forgot Pressed'), style: 'cancel' }, // eslint-disable-line no-console
+            { text: 'Cancel', onPress: () => console.log('Forgot Pressed'), style: 'cancel' }, // eslint-disable-line no-console
           ],
         );
     });
@@ -156,6 +159,14 @@ class Signin extends Component {
     this.setState({
       view: this.state.view === 'signup' ? 'login' : 'signup',
     });
+  }
+
+  goToForgotPassword() {
+    console.log("goToForgotPassword pressed")
+  }
+
+  goToForgotWorkspace() {
+    console.log("goToForgotWorkspace pressed")
   }
 
   render() {
@@ -210,6 +221,25 @@ class Signin extends Component {
             </Text>
           </TouchableOpacity>
         </View>
+        {view === 'login' ? 
+        <View style={styles.switchContainer}>
+          <TouchableOpacity
+            onPress={this.goToForgotPassword}
+          >
+            <Text style={styles.switchAction}>
+              {"Forgot password ?"}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={this.goToForgotWorkspace}
+          >
+            <Text style={styles.switchAction}>
+              {"Forgot workspace ?"}
+            </Text>
+          </TouchableOpacity>
+        </View> 
+        : console.log("nothing")     
+        }  
       </KeyboardAvoidingView>
     );
   }
@@ -241,6 +271,20 @@ Signin.propTypes = {
 //     username
 //   }
 // } 
+
+// {
+//   user(id:8) {
+//     id
+//     username
+//     userstories {
+//       id 
+//       name
+//       tasks {id, title, state}
+//   }
+//   }
+// }
+
+// query {userstory(id:1) {id, name, tasks(first: 2, after:"MjI=") {edges {node {id title state} cursor}}}}
 
 // {
 //   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZW1haWwiOiJDaGFkcmljazQyQHlhaG9vLmNvbSIsInZlcnNpb24iOjEsImlhdCI6MTU0ODc2NzI4Nn0.iIl3X24x-tlGzQEWBUc2Zl49IguCDNGlDDFq5M-zb7M"

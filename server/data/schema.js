@@ -37,6 +37,18 @@ export const typeDefs = gql`
     node: Message!
   }
 
+  # the wrapper type that will hold the edges and pageInfo fields
+  type TaskConnection {
+    edges: [TaskEdge]
+    pageInfo: PageInfo!
+  }
+
+  # the type used for edges and will hold the node and cursor fields
+  type TaskEdge {
+    cursor: String!
+    node: Task!
+  }
+
   # the type used for pageInfo and hold the hasPreviousPage and hasNextPage fields
   type PageInfo {
     hasNextPage: Boolean!
@@ -67,6 +79,7 @@ export const typeDefs = gql`
     workspace: Workspace # the workspace the user belongs to
     messages: [Message] # messages sent by user
     groups: [Group] # groups the user belongs to
+    userstories: [Userstory] # userstories the user belongs to
     friends: [User] # user's friends/contacts
     jwt: String # json web token for access
   }
@@ -93,7 +106,7 @@ export const typeDefs = gql`
     name: String # name of the story
     users: [User]! # users in the story
     ownerId: Int! # user id of the owner of the user story group
-    tasks(id: Int, userstoryId: Int): [Task]
+    tasks(first: Int, after: String, last: Int, before: String): TaskConnection # tasks sent to the us
   }
 
   # a task entity
@@ -101,9 +114,10 @@ export const typeDefs = gql`
     id: Int! # unique id for the task
     title: String # title of the task
     belongsTo: Userstory! # the User Story the task belongs to
-    from: User # user who works on the task
+    from: User! # user who works on the task
     ownerId: Int # user id of the owner of the task
     state: TaskStateEnum!
+    createdAt: Date! # when message was created
   }
 
   # query for types
@@ -119,7 +133,7 @@ export const typeDefs = gql`
     group(id: Int!): Group
     
     # Return a User Story by its id
-    userstory(userstoryId: Int!): Userstory
+    userstory(id: Int!): Userstory
 
     # Return a task by its userstoryid
     # Return tasks via userId

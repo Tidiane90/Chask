@@ -28,6 +28,15 @@ export const USER_QUERY = gql`
           }
         }
       }
+      userstories {
+        id
+        name
+        tasks {
+          id 
+          title
+          state
+        }
+      }
       friends {
         id
         username

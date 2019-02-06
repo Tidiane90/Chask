@@ -14,10 +14,12 @@ import { Buffer } from 'buffer';
 import { REHYDRATE } from 'redux-persist';
 
 import Groups from './screens/groups.screen';
+import Userstories from './screens/userstories.screen';
 import Messages from './screens/messages.screen';
 import FinalizeGroup from './screens/finalize-group.screen';
 import GroupDetails from './screens/group-details.screen';
 import NewGroup from './screens/new-group.screen';
+import UserstoryDetails from './screens/userstory-details.screen';
 import Signin from './screens/signin.screen';
 import Settings from './screens/settings.screen';
 
@@ -39,7 +41,7 @@ const TestScreen = title => () => (
 // tabs in main screen
 const MainScreenNavigator = TabNavigator({
   Chats: { screen: Groups },
-  Workflows: { screen: TestScreen('Workflows') },
+  Workflows: { screen: Userstories },
   Settings: { screen: Settings },
 }, {
   initialRouteName: 'Chats',
@@ -52,6 +54,7 @@ const AppNavigator = StackNavigator({
   GroupDetails: { screen: GroupDetails },
   NewGroup: { screen: NewGroup },
   FinalizeGroup: { screen: FinalizeGroup },
+  UserstoryDetails: { screen: UserstoryDetails }
 }, {
     mode: 'modal',
 });

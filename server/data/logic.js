@@ -69,12 +69,63 @@ export const userstoryLogic = {
   users(userstory, args, ctx) {
     return userstory.getUsers({ attributes: ['id', 'username'] });
   },
-  tasks(userstory, args, ctx) {
-    return userstory.getTasks();
+  tasks(userstory, { first, last, before, after }, ctx) {
+    // return userstory.getTasks();
+    // base query -- get messages from the right group
+    const where = { userstoryId: userstory.id };
+
+    // because we return messages from newest -> oldest
+    // before actually means newer (date > cursor)
+    // after actually means older (date < cursor)
+    if (before) {
+      // convert base-64 to utf8 iso date and use in Date constructor
+      where.id = { $gt: Buffer.from(before, 'base64').toString() };
+    }
+    if (after) {
+      where.id = { $lt: Buffer.from(after, 'base64').toString() };
+    }
+    return Task.findAll({
+      where,
+      order: [['id', 'DESC']],
+      limit: first || last,
+    }).then((tasks) => {
+      const edges = tasks.map(task => ({
+        cursor: Buffer.from(task.id.toString()).toString('base64'), // convert createdAt to cursor
+        node: task, // the node is the message itself
+      }));
+      return {
+        edges,
+        pageInfo: {
+          hasNextPage() {
+            if (tasks.length < (last || first)) {
+              return Promise.resolve(false);
+            }
+            return Task.findOne({
+              where: {
+                userstoryId: userstory.id,
+                id: {
+                  [before ? '$gt' : '$lt']: tasks[tasks.length - 1].id,
+                },
+              },
+              order: [['id', 'DESC']],
+            }).then(task => !!task);
+          },
+          hasPreviousPage() {
+            return Task.findOne({
+              where: {
+                userstoryId: userstory.id,
+                id: where.id,
+              },
+              order: [['id']],
+            }).then(task => !!task);
+          },
+        },
+      };
+    });
   }, 
-  query(_, { userstoryId }, ctx) {
+  query(_, { id }, ctx) {
     return getAuthenticatedUser(ctx).then(user => Userstory.findOne({
-      where: { userstoryId },
+      where: { id },
       include: [{
         model: User,
         where: { id: user.id },
@@ -109,6 +160,7 @@ export const taskLogic = {
     //   }
     //   throw new ForbiddenError('Unauthorized');
     // });
+    return task.getUser();
   },
   state(task, args, ctx) {
     // return getAuthenticatedUser(ctx).then((currentUser) => {
@@ -123,6 +175,7 @@ export const taskLogic = {
     return Task.findAll({
       where: { userstoryId }
     })
+  },
     // return getAuthenticatedUser(ctx).then(user => Task.findOne({
     //   where: { id },
     //   include: [{
@@ -130,7 +183,6 @@ export const taskLogic = {
     //     where: { id: user.id },
     //   }],
     // }));
-  },
 }
 
 export const groupLogic = {
@@ -305,6 +357,14 @@ export const userLogic = {
         throw new ForbiddenError('Unauthorized');
       }
       return user.getGroups();
+    });
+  },
+  userstories(user, args, ctx) {
+    return getAuthenticatedUser(ctx).then((currentUser) => {
+      if (currentUser.id !== user.id) {
+        throw new ForbiddenError('Unauthorized');
+      }
+      return user.getUserstories();
     });
   },
   jwt(user) {

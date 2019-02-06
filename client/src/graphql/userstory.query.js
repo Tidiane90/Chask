@@ -10,8 +10,9 @@ const USERSTORY_QUERY = gql`
         username
       }
       tasks {
-          title
-          state
+        id
+        title
+        state
       }
     }
   }

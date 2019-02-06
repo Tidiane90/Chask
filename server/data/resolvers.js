@@ -243,6 +243,9 @@ export const resolvers = {
     messages(user, args, ctx) {
       return userLogic.messages(user, args, ctx);
     },
+    userstories(user, args, ctx) {
+      return userLogic.userstories(user, args, ctx);
+    },
   },
 };
 export default resolvers;
