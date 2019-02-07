@@ -31,10 +31,15 @@ export const USER_QUERY = gql`
       userstories {
         id
         name
-        tasks {
-          id 
-          title
-          state
+        tasks(first: 1) { # we don't need to use variables
+          edges {
+            cursor
+            node {
+              id
+              title
+              state
+            }
+          }
         }
       }
       friends {

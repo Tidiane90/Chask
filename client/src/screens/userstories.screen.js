@@ -164,13 +164,12 @@ Userstory.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
     ownerId: PropTypes.bool,
-    tasks: PropTypes.arrayOf(
-      PropTypes.shape({
-          id:  PropTypes.number.isRequired,
-          title: PropTypes.string.isRequired,
-          state: PropTypes.string.isRequired
-      })
-  ),
+    tasks: PropTypes.shape({
+      edges: PropTypes.arrayOf(PropTypes.shape({
+        cursor: PropTypes.string,
+        node: PropTypes.object,
+      })),
+    }),
   }),
 };
 
@@ -205,13 +204,13 @@ class Userstories extends Component {
 
   goToUserstoryDetails(userstory) {
     const { navigate } = this.props.navigation;
-    navigate('Userstorydetails', { userstoryId: userstory.id, title: userstory.name });
+    // navigate('Userstorydetails', { userstoryId: userstory.id, title: userstory.name });
   }
 
-  goToNewUserstory() {
-    const { navigate } = this.props.navigation;
-    navigate('NewUserstory');
-  }
+  // goToNewUserstory() {
+  //   const { navigate } = this.props.navigation;
+  //   navigate('NewUserstory');
+  // }
 
   renderItem = ({ item }) => <Userstory userstory={item} goToTasksWindow={this.goToTasksWindow} />;
 
@@ -266,13 +265,6 @@ Userstories.propTypes = {
             PropTypes.shape({
                 id: PropTypes.number.isRequired,
                 name: PropTypes.string.isRequired,
-                tasks: PropTypes.arrayOf(
-                    PropTypes.shape({
-                        id:  PropTypes.number.isRequired,
-                        title: PropTypes.string.isRequired,
-                        state: PropTypes.string.isRequired
-                    })
-                ),
             }),
         ),
     }),
@@ -307,5 +299,5 @@ const mapStateToProps = ({ auth }) => ({
 export default compose(
   connect(mapStateToProps),
   userQuery,
-  userstoryQuery,
+  //userstoryQuery,
 )(Userstories);

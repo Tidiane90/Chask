@@ -54,7 +54,7 @@ const AppNavigator = StackNavigator({
   GroupDetails: { screen: GroupDetails },
   NewGroup: { screen: NewGroup },
   FinalizeGroup: { screen: FinalizeGroup },
-  UserstoryDetails: { screen: UserstoryDetails }
+  // UserstoryDetails: { screen: UserstoryDetails }
 }, {
     mode: 'modal',
 });

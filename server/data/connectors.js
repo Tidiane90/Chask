@@ -86,7 +86,7 @@ MessageModel.belongsTo(GroupModel);
 
 // tasks are created from users
 TaskModel.belongsToMany(UserModel, { through: 'TaskUser' });
-TaskModel.belongsTo(UserModel);
+// TaskModel.belongsTo(UserModel);
 
 // tasks belong to user stories
 TaskModel.belongsTo(UserstoryModel);
