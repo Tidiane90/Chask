@@ -107,6 +107,7 @@ export const typeDefs = gql`
     users: [User]! # users in the story
     ownerId: Int! # user id of the owner of the user story group
     tasks(first: Int, after: String, last: Int, before: String): TaskConnection # tasks sent to the us
+    count: Int
   }
 
   # a task entity

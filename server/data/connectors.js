@@ -86,7 +86,7 @@ MessageModel.belongsTo(GroupModel);
 
 // tasks are created from users
 TaskModel.belongsToMany(UserModel, { through: 'TaskUser' });
-// TaskModel.belongsTo(UserModel);
+TaskModel.belongsTo(UserModel);
 
 // tasks belong to user stories
 TaskModel.belongsTo(UserstoryModel);
@@ -144,7 +144,7 @@ db.sync({ force: true }).then(() => WorkspaceModel.create({
     // console.log(Object.keys(group.__proto__));
     const password = faker.lorem.words(1);
     // const password = faker.internet.password();
-    // console.log(Object.keys(us.__proto__));
+    // <console.log(Object.keys(us.__proto__));
     return bcrypt.hash(password, mySalt).then(hash => group.createUser({
       email: faker.internet.email(),
       username: faker.internet.userName(),
@@ -168,19 +168,25 @@ db.sync({ force: true }).then(() => WorkspaceModel.create({
         title: faker.lorem.words(2),
         ownerId: 5
       }).then((task) => {
-        us.addTask(task);
+        us.addTask(task).then(() => {
+          console.log('count tasks----------------');
+          us.countTasks().then(res => console.log(res));
+        });
         task.setUserstory(us);
         // console.log(Object.keys(task.__proto__));
         console.log(
-          '{Task id, title, state, userstoryId}',
-          `{${task.id}, ${task.title}, ${task.state}, ${task.userstoryId}}`
+          '{Task id, title, state, userstoryId, userId}',
+          `{${task.id}, ${task.title}, ${task.state}, ${task.userstoryId}, ${task.userId}}`
         );
+        
+        
       });
       if(user.hasUserstory())
         console.log("already added us")
       else 
         user.addUserstory(us);
       us.addUser(user);
+      
       workspaceTest.addUser(user);
       user.setWorkspace(workspaceTest); 
 

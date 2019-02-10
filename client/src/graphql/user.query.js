@@ -31,6 +31,7 @@ export const USER_QUERY = gql`
       userstories {
         id
         name
+        count
         tasks(first: 1) { # we don't need to use variables
           edges {
             cursor

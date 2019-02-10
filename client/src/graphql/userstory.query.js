@@ -9,10 +9,15 @@ const USERSTORY_QUERY = gql`
         id
         username
       }
-      tasks {
-        id
-        title
-        state
+      tasks(first: $first, after: $after, last: $last, before: $before) { 
+        edges {
+          cursor
+          node {
+            id
+            title
+            state
+          }
+        }
       }
     }
   }

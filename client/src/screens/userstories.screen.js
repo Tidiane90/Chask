@@ -207,14 +207,15 @@ class Userstories extends Component {
     // navigate('Userstorydetails', { userstoryId: userstory.id, title: userstory.name });
   }
 
-  // goToNewUserstory() {
-  //   const { navigate } = this.props.navigation;
-  //   navigate('NewUserstory');
-  // }
+  goToNewUserstory() {
+    const { navigate } = this.props.navigation;
+    // navigate('NewUserstory');
+  }
 
-  renderItem = ({ item }) => <Userstory userstory={item} goToTasksWindow={this.goToTasksWindow} />;
+  renderItem = ({ item }) => <Userstory userstory={item} goToUserstoryDetails={this.goToUserstoryDetails} />;
 
   render() {
+    console.log(this.props)
     const { loading, user, networkStatus  } = this.props;
 
     // render loading placeholder while we fetch messages
@@ -265,6 +266,7 @@ Userstories.propTypes = {
             PropTypes.shape({
                 id: PropTypes.number.isRequired,
                 name: PropTypes.string.isRequired,
+                count: PropTypes.number.isRequired,
             }),
         ),
     }),

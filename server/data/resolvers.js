@@ -198,9 +198,12 @@ export const resolvers = {
     users(userstory, args, ctx) {
       return userstoryLogic.users(userstory, args, ctx);
     },
-    tasks(group, args, ctx) {
-      return userstoryLogic.tasks(group, args, ctx);
+    tasks(userstory, args, ctx) {
+      return userstoryLogic.tasks(userstory, args, ctx);
     },
+    count(userstory, args, ctx) {
+      return userstoryLogic.count(userstory, args, ctx);
+    }
   },
   Task: {
     title(task, args, ctx) {

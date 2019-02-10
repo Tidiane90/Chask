@@ -109,7 +109,7 @@ class Signin extends Component {
     this.setState({
       loading: true,
     });
-    this.props.login({ workspaceName:"testWorkspace", email:"Chadrick42@yahoo.com", password:"omnis" })
+    this.props.login({ workspaceName:"testWorkspace", email:"Chadrick42@yahoo.com", password:"quis" })
       .then(({ data: { login: user } }) => {
         this.props.dispatch(setCurrentUser(user));
         this.setState({

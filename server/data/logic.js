@@ -123,6 +123,9 @@ export const userstoryLogic = {
       };
     });
   }, 
+  count(userstory, args, ctx) {
+    return userstory.countTasks();
+  },
   query(_, { id }, ctx) {
     return getAuthenticatedUser(ctx).then(user => Userstory.findOne({
       where: { id },
